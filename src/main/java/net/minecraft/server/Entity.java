@@ -29,6 +29,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Hanging;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Vehicle;
+import org.spigotmc.CustomTimingsHandler; // Spigot
 import org.bukkit.event.entity.EntityCombustByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.vehicle.VehicleBlockCollisionEvent;
@@ -164,6 +165,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
     public boolean valid;
     public org.bukkit.projectiles.ProjectileSource projectileSource; // For projectiles only
     public boolean forceExplosionKnockback; // SPIGOT-949
+    public CustomTimingsHandler tickTimer = org.bukkit.craftbukkit.SpigotTimings.getEntityTimings(this); // Spigot
 
     public float getBukkitYaw() {
         return this.yaw;
@@ -490,6 +492,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
     }
 
     public void move(EnumMoveType enummovetype, Vec3D vec3d) {
+        org.bukkit.craftbukkit.SpigotTimings.entityMoveTimer.startTiming(); // Spigot
         if (this.noclip) {
             this.a(this.getBoundingBox().b(vec3d));
             this.recalcPosition();
@@ -641,6 +644,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
 
             this.world.getMethodProfiler().exit();
         }
+        org.bukkit.craftbukkit.SpigotTimings.entityMoveTimer.stopTiming(); // Spigot
     }
 
     protected BlockPosition ag() {

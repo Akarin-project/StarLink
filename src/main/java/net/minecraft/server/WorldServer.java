@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.WeatherType;
+import org.bukkit.craftbukkit.SpigotTimings; // Spigot
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.server.MapInitializeEvent;
@@ -306,10 +307,12 @@ public class WorldServer extends World {
         gameprofilerfiller.exitEnter("chunkSource");
         this.getChunkProvider().tick(booleansupplier);
         gameprofilerfiller.exitEnter("tickPending");
+        timings.doTickPending.startTiming(); // Spigot
         if (this.worldData.getType() != WorldType.DEBUG_ALL_BLOCK_STATES) {
             this.nextTickListBlock.b();
             this.nextTickListFluid.b();
         }
+        timings.doTickPending.stopTiming(); // Spigot
 
         gameprofilerfiller.exitEnter("raid");
         this.persistentRaid.a();
@@ -318,7 +321,9 @@ public class WorldServer extends World {
         }
 
         gameprofilerfiller.exitEnter("blockEvents");
+        timings.doSounds.startTiming(); // Spigot
         this.ad();
+        timings.doSounds.stopTiming(); // Spigot
         this.ticking = false;
         gameprofilerfiller.exitEnter("entities");
         boolean flag3 = true || !this.players.isEmpty() || !this.getForceLoadedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players
@@ -328,6 +333,7 @@ public class WorldServer extends World {
         }
 
         if (flag3 || this.emptyTime++ < 300) {
+            timings.tickEntities.startTiming(); // Spigot
             this.worldProvider.j();
             gameprofilerfiller.enter("global");
 
@@ -353,6 +359,7 @@ public class WorldServer extends World {
             this.tickingEntities = true;
             ObjectIterator objectiterator = this.entitiesById.int2ObjectEntrySet().iterator();
 
+            timings.entityTick.startTiming(); // Spigot
             while (objectiterator.hasNext()) {
                 Entry<Entity> entry = (Entry) objectiterator.next();
                 Entity entity1 = (Entity) entry.getValue();
@@ -397,6 +404,7 @@ public class WorldServer extends World {
 
                 gameprofilerfiller.exit();
             }
+            timings.entityTick.stopTiming(); // Spigot
 
             this.tickingEntities = false;
 
@@ -405,6 +413,7 @@ public class WorldServer extends World {
             }
 
             gameprofilerfiller.exit();
+            timings.tickEntities.stopTiming(); // Spigot
             this.tickBlockEntities();
         }
 
@@ -593,6 +602,7 @@ public class WorldServer extends World {
 
     public void entityJoinedWorld(Entity entity) {
         if (entity instanceof EntityHuman || this.getChunkProvider().a(entity)) {
+            entity.tickTimer.startTiming(); // Spigot
             entity.f(entity.locX(), entity.locY(), entity.locZ());
             entity.lastYaw = entity.yaw;
             entity.lastPitch = entity.pitch;
@@ -619,6 +629,7 @@ public class WorldServer extends World {
                     this.a(entity, entity1);
                 }
             }
+            entity.tickTimer.stopTiming(); // Spigot
 
         }
     }

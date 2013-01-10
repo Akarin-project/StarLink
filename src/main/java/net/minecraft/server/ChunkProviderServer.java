@@ -102,9 +102,11 @@ public class ChunkProviderServer extends IChunkProvider {
             }
 
             gameprofilerfiller.c("getChunkCacheMiss");
+            world.timings.syncChunkLoadTimer.startTiming(); // Spigot
             CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> completablefuture = this.getChunkFutureMainThread(i, j, chunkstatus, flag);
 
             this.serverThreadQueue.awaitTasks(completablefuture::isDone);
+            world.timings.syncChunkLoadTimer.stopTiming(); // Spigot
             ichunkaccess = (IChunkAccess) ((Either) completablefuture.join()).map((ichunkaccess1) -> {
                 return ichunkaccess1;
             }, (playerchunk_failure) -> {
@@ -329,12 +331,16 @@ public class ChunkProviderServer extends IChunkProvider {
 
     public void tick(BooleanSupplier booleansupplier) {
         this.world.getMethodProfiler().enter("purge");
+        this.world.timings.doChunkMap.startTiming(); // Spigot
         this.chunkMapDistance.purgeTickets();
         this.tickDistanceManager();
+        this.world.timings.doChunkMap.stopTiming(); // Spigot
         this.world.getMethodProfiler().exitEnter("chunks");
         this.tickChunks();
+        this.world.timings.doChunkUnload.startTiming(); // Spigot
         this.world.getMethodProfiler().exitEnter("unload");
         this.playerChunkMap.unloadChunks(booleansupplier);
+        this.world.timings.doChunkUnload.stopTiming(); // Spigot
         this.world.getMethodProfiler().exit();
         this.clearCache();
     }
@@ -375,6 +381,7 @@ public class ChunkProviderServer extends IChunkProvider {
                         chunk.setInhabitedTime(chunk.getInhabitedTime() + j);
                         if (flag1 && (this.allowMonsters || this.allowAnimals) && this.world.getWorldBorder().isInBounds(chunk.getPos())) {
                             this.world.getMethodProfiler().enter("spawner");
+                            this.world.timings.mobSpawn.startTiming(); // Spigot
                             EnumCreatureType[] aenumcreaturetype1 = aenumcreaturetype;
                             int i1 = aenumcreaturetype.length;
 
@@ -412,10 +419,13 @@ public class ChunkProviderServer extends IChunkProvider {
                                 }
                             }
 
+                            this.world.timings.mobSpawn.stopTiming(); // Spigot
                             this.world.getMethodProfiler().exit();
                         }
 
+                        this.world.timings.doTickTiles.startTiming(); // Spigot
                         this.world.a(chunk, k);
+                        this.world.timings.doTickTiles.stopTiming(); // Spigot
                     }
                 }
             });
@@ -428,7 +438,9 @@ public class ChunkProviderServer extends IChunkProvider {
             this.world.getMethodProfiler().exit();
         }
 
+        this.world.timings.tracker.startTiming(); // Spigot
         this.playerChunkMap.g();
+        this.world.timings.tracker.stopTiming(); // Spigot
     }
 
     @Override

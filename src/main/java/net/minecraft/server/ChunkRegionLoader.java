@@ -388,6 +388,7 @@ public class ChunkRegionLoader {
     private static void loadEntities(NBTTagCompound nbttagcompound, Chunk chunk) {
         NBTTagList nbttaglist = nbttagcompound.getList("Entities", 10);
         World world = chunk.getWorld();
+        world.timings.syncChunkLoadEntitiesTimer.startTiming(); // Spigot
 
         for (int i = 0; i < nbttaglist.size(); ++i) {
             NBTTagCompound nbttagcompound1 = nbttaglist.getCompound(i);
@@ -399,6 +400,8 @@ public class ChunkRegionLoader {
             chunk.d(true);
         }
 
+        world.timings.syncChunkLoadEntitiesTimer.stopTiming(); // Spigot
+        world.timings.syncChunkLoadTileEntitiesTimer.startTiming(); // Spigot
         NBTTagList nbttaglist1 = nbttagcompound.getList("TileEntities", 10);
 
         for (int j = 0; j < nbttaglist1.size(); ++j) {
@@ -415,6 +418,7 @@ public class ChunkRegionLoader {
                 }
             }
         }
+        world.timings.syncChunkLoadTileEntitiesTimer.stopTiming(); // Spigot
 
     }
 
