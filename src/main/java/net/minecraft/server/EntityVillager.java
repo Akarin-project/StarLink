@@ -131,6 +131,17 @@ public class EntityVillager extends EntityVillagerAbstract implements Reputation
         this.getAttributeInstance(GenericAttributes.FOLLOW_RANGE).setValue(48.0D);
     }
 
+    // Spigot Start
+    @Override
+    public void inactiveTick() {
+        // SPIGOT-3874, SPIGOT-3894, SPIGOT-3846, SPIGOT-5286 :(
+        if (world.spigotConfig.tickInactiveVillagers && this.doAITick()) {
+            this.mobTick();
+        }
+        super.inactiveTick();
+    }
+    // Spigot End
+
     @Override
     protected void mobTick() {
         this.world.getMethodProfiler().enter("brain");
