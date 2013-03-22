@@ -86,7 +86,7 @@ public class WorldServer extends World {
                 chunkGenerator = worldprovider.getChunkGenerator();
             }
 
-            return new ChunkProviderServer((WorldServer) world, worldnbtstorage.getDirectory(), worldnbtstorage.getDataFixer(), worldnbtstorage.f(), executor, chunkGenerator, minecraftserver.getPlayerList().getViewDistance(), worldloadlistener, () -> {
+            return new ChunkProviderServer((WorldServer) world, worldnbtstorage.getDirectory(), worldnbtstorage.getDataFixer(), worldnbtstorage.f(), executor, chunkGenerator, world.spigotConfig.viewDistance, worldloadlistener, () -> { // Spigot
                 return minecraftserver.getWorldServer(DimensionManager.OVERWORLD).getWorldPersistentData();
             });
             // CraftBukkit end
