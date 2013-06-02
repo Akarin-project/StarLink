@@ -2250,4 +2250,15 @@ public class CraftWorld implements World {
         PersistentRaid persistentRaid = world.getPersistentRaid();
         return persistentRaid.raids.values().stream().map(CraftRaid::new).collect(Collectors.toList());
     }
+
+    // Spigot start
+    private final Spigot spigot = new Spigot()
+    {
+    };
+
+    public Spigot spigot()
+    {
+        return spigot;
+    }
+    // Spigot end
 }
