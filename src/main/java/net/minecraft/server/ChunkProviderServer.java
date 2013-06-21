@@ -379,7 +379,7 @@ public class ChunkProviderServer extends IChunkProvider {
 
                     if (!this.playerChunkMap.isOutsideOfRange(chunkcoordintpair)) {
                         chunk.setInhabitedTime(chunk.getInhabitedTime() + j);
-                        if (flag1 && (this.allowMonsters || this.allowAnimals) && this.world.getWorldBorder().isInBounds(chunk.getPos())) {
+                        if (flag1 && (this.allowMonsters || this.allowAnimals) && this.world.getWorldBorder().isInBounds(chunk.getPos()) && !this.playerChunkMap.isOutsideOfRange(chunkcoordintpair, true)) { // Spigot
                             this.world.getMethodProfiler().enter("spawner");
                             this.world.timings.mobSpawn.startTiming(); // Spigot
                             EnumCreatureType[] aenumcreaturetype1 = aenumcreaturetype;
