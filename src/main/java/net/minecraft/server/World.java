@@ -65,6 +65,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     public long ticksPerAnimalSpawns;
     public long ticksPerMonsterSpawns;
     public boolean populating;
+    public final org.spigotmc.SpigotWorldConfig spigotConfig; // Spigot
 
     public CraftWorld getWorld() {
         return this.world;
@@ -79,6 +80,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     }
 
     protected World(WorldData worlddata, DimensionManager dimensionmanager, BiFunction<World, WorldProvider, IChunkProvider> bifunction, GameProfilerFiller gameprofilerfiller, boolean flag, org.bukkit.generator.ChunkGenerator gen, org.bukkit.World.Environment env) {
+        this.spigotConfig = new org.spigotmc.SpigotWorldConfig( worlddata.getName() ); // Spigot
         this.generator = gen;
         this.world = new CraftWorld((WorldServer) this, gen, env);
         this.ticksPerAnimalSpawns = this.getServer().getTicksPerAnimalSpawns(); // CraftBukkit

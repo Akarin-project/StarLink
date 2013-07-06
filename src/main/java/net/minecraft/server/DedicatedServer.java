@@ -164,6 +164,11 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
             this.h(dedicatedserverproperties.preventProxyConnections);
             this.b(dedicatedserverproperties.serverIp);
         }
+        // Spigot start
+        this.a((PlayerList) (new DedicatedPlayerList(this)));
+        org.spigotmc.SpigotConfig.init((File) options.valueOf("spigot-settings"));
+        org.spigotmc.SpigotConfig.registerCommands();
+        // Spigot end
 
         this.setSpawnAnimals(dedicatedserverproperties.spawnAnimals);
         this.setSpawnNPCs(dedicatedserverproperties.spawnNpcs);
@@ -200,7 +205,7 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
         }
 
         // CraftBukkit start
-        this.a((PlayerList) (new DedicatedPlayerList(this)));
+        // this.a((PlayerList) (new DedicatedPlayerList(this))); // Spigot - moved up
         server.loadPlugins();
         server.enablePlugins(org.bukkit.plugin.PluginLoadOrder.STARTUP);
         // CraftBukkit end
