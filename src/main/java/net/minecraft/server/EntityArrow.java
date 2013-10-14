@@ -266,7 +266,7 @@ public abstract class EntityArrow extends Entity implements IProjectile {
 
     protected void i() {
         ++this.despawnCounter;
-        if (this.despawnCounter >= 1200) {
+        if (this.despawnCounter >= ((this instanceof EntityThrownTrident) ? world.spigotConfig.tridentDespawnRate : world.spigotConfig.arrowDespawnRate)) { // Spigot
             this.die();
         }
 
