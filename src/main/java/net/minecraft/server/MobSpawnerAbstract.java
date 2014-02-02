@@ -128,6 +128,12 @@ public abstract class MobSpawnerAbstract {
                             if (this.spawnData.getEntity().e() == 1 && this.spawnData.getEntity().hasKeyOfType("id", 8)) {
                                 ((EntityInsentient) entity).prepare(world, world.getDamageScaler(new BlockPosition(entity)), EnumMobSpawn.SPAWNER, (GroupDataEntity) null, (NBTTagCompound) null);
                             }
+                            // Spigot Start
+                            if ( entityinsentient.world.spigotConfig.nerfSpawnerMobs )
+                            {
+                                entityinsentient.aware = false;
+                            }
+                            // Spigot End
                         }
 
                         this.a(entity);
