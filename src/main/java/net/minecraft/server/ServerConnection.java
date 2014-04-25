@@ -145,6 +145,10 @@ public class ServerConnection {
                             networkmanager.stopReading();
                         }
                     } else {
+                        // Spigot Start
+                        // Fix a race condition where a NetworkManager could be unregistered just before connection.
+                        if (networkmanager.preparing) continue;
+                        // Spigot End
                         iterator.remove();
                         networkmanager.handleDisconnection();
                     }
