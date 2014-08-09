@@ -93,7 +93,7 @@ public abstract class EntityHanging extends Entity {
 
     @Override
     public void tick() {
-        if (this.e++ == 100 && !this.world.isClientSide) {
+        if (this.e++ == this.world.spigotConfig.hangingTickFrequency && !this.world.isClientSide) { // Spigot
             this.e = 0;
             if (!this.dead && !this.survives()) {
                 // CraftBukkit start - fire break events
