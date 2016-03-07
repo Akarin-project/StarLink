@@ -43,7 +43,7 @@ public class BlockKelp extends Block implements IFluidContainer {
             BlockPosition blockposition1 = blockposition.up();
             IBlockData iblockdata1 = worldserver.getType(blockposition1);
 
-            if (iblockdata1.getBlock() == Blocks.WATER && (Integer) iblockdata.get(BlockKelp.a) < 25 && random.nextDouble() < 0.14D) {
+            if (iblockdata1.getBlock() == Blocks.WATER && (Integer) iblockdata.get(BlockKelp.a) < 25 && random.nextDouble() < (100.0D / worldserver.spigotConfig.kelpModifier) * 0.14D) { // Spigot
                 org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockSpreadEvent(worldserver, blockposition, blockposition1, (IBlockData) iblockdata.a((IBlockState) BlockKelp.a)); // CraftBukkit
             }
 

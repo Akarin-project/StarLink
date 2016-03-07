@@ -160,7 +160,7 @@ public class BlockVine extends Block {
                 worldserver.a(blockposition, false);
             }
 
-        } else if (worldserver.random.nextInt(4) == 0) {
+        } else if (worldserver.random.nextInt(Math.max(1, (int) (100.0F / worldserver.spigotConfig.vineModifier) * 4)) == 0) { // Spigot
             EnumDirection enumdirection = EnumDirection.a(random);
             BlockPosition blockposition1 = blockposition.up();
             BlockPosition blockposition2;
