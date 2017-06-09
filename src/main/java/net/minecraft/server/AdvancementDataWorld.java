@@ -33,6 +33,12 @@ public class AdvancementDataWorld extends ResourceDataJson {
         Map<MinecraftKey, Advancement.SerializedAdvancement> map1 = Maps.newHashMap();
 
         map.forEach((minecraftkey, jsonobject) -> {
+            // Spigot start
+            if (org.spigotmc.SpigotConfig.disabledAdvancements != null && (org.spigotmc.SpigotConfig.disabledAdvancements.contains("*") || org.spigotmc.SpigotConfig.disabledAdvancements.contains(minecraftkey.toString()))) {
+                return;
+            }
+            // Spigot end
+
             try {
                 Advancement.SerializedAdvancement advancement_serializedadvancement = (Advancement.SerializedAdvancement) AdvancementDataWorld.DESERIALIZER.fromJson(jsonobject, Advancement.SerializedAdvancement.class);
 
