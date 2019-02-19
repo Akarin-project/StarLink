@@ -65,6 +65,14 @@ public class RegionFile implements AutoCloseable {
                     if (k != 0) {
                         int l = b(k);
                         int i1 = a(k);
+                        // Spigot start
+                        if (i1 == 255) {
+                            // We're maxed out, so we need to read the proper length from the section
+                            ByteBuffer realLen = ByteBuffer.allocate(4);
+                            this.dataFile.read(realLen, l * 4096);
+                            i1 = (realLen.getInt(0) + 4) / 4096 + 1;
+                        }
+                        // Spigot end
 
                         this.freeSectors.a(l, i1);
                     }
@@ -89,6 +97,13 @@ public class RegionFile implements AutoCloseable {
         } else {
             int j = b(i);
             int k = a(i);
+            // Spigot start
+            if (k == 255) {
+                ByteBuffer realLen = ByteBuffer.allocate(4);
+                this.dataFile.read(realLen, j * 4096);
+                k = (realLen.getInt(0) + 4) / 4096 + 1;
+            }
+            // Spigot end
             int l = k * 4096;
             ByteBuffer bytebuffer = ByteBuffer.allocate(l);
 
