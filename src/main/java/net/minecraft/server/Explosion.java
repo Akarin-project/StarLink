@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mojang.datafixers.util.Pair;
+import cc.bukkit.starlink.collection.MappedBlockList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import java.util.Collections;
@@ -25,7 +26,7 @@ public class Explosion {
 
     private final boolean a;
     private final Explosion.Effect b;
-    private final Random c = new Random();
+    private final Random c = java.util.concurrent.ThreadLocalRandom.current(); // StarLink - Random -> ThreadLocalRandom
     private final World world;
     private final double posX;
     private final double posY;
@@ -37,6 +38,7 @@ public class Explosion {
     private final List<BlockPosition> blocks = Lists.newArrayList();
     private final Map<EntityHuman, Vec3D> l = Maps.newHashMap();
     public boolean wasCanceled = false; // CraftBukkit - add field
+    @Nullable private List<BlockPosition> airIgnites; // StarLink - add list for igniting air blocks
 
     public Explosion(World world, @Nullable Entity entity, double d0, double d1, double d2, float f, boolean flag, Explosion.Effect explosion_effect) {
         this.world = world;
@@ -46,6 +48,7 @@ public class Explosion {
         this.posY = d1;
         this.posZ = d2;
         this.a = flag;
+        if (flag) airIgnites = Lists.newArrayList(); // StarLink - add list for igniting air blocks
         this.b = explosion_effect;
         this.j = DamageSource.explosion(this);
     }
@@ -114,7 +117,7 @@ public class Explosion {
                         double d5 = this.posY;
                         double d6 = this.posZ;
 
-                        for (float f1 = 0.3F; f > 0.0F; f -= 0.22500001F) {
+                        for (float f1 = 0.3F; f > 0.0F && d5 < 256 && d5 >= 0; f -= 0.22500001F) { // StarLink - check earlier, see below
                             BlockPosition blockposition = new BlockPosition(d4, d5, d6);
                             IBlockData iblockdata = this.world.getType(blockposition);
                             Fluid fluid = this.world.getFluid(blockposition);
@@ -129,8 +132,8 @@ public class Explosion {
                                 f -= (f2 + 0.3F) * 0.3F;
                             }
 
-                            if (f > 0.0F && (this.source == null || this.source.a(this, this.world, blockposition, iblockdata, f)) && blockposition.getY() < 256 && blockposition.getY() >= 0) { // CraftBukkit - don't wrap explosions
-                                set.add(blockposition);
+                            if (f > 0.0F && (this.source == null || this.source.a(this, this.world, blockposition, iblockdata, f)) /*&& blockposition.getY() < 256 && blockposition.getY() >= 0*/) { // CraftBukkit - don't wrap explosions // StarLink - check this earlier
+                                if (iblockdata.isAir()) { if (a) airIgnites.add(blockposition); } else if (b != Explosion.Effect.NONE) set.add(blockposition); // StarLink - optimize igniting, see below
                             }
 
                             d4 += d0 * 0.30000001192092896D;
@@ -222,14 +225,16 @@ public class Explosion {
         if (flag1) {
             ObjectArrayList<Pair<ItemStack, BlockPosition>> objectarraylist = new ObjectArrayList();
 
-            Collections.shuffle(this.blocks, this.world.random);
+            if (world.starLinkSettings.shuffleExplosionBlocks) Collections.shuffle(this.blocks, this.world.random); // StarLink - configurable
             Iterator iterator = this.blocks.iterator();
             // CraftBukkit start
             org.bukkit.World bworld = this.world.getWorld();
             org.bukkit.entity.Entity explode = this.source == null ? null : this.source.getBukkitEntity();
             Location location = new Location(bworld, this.posX, this.posY, this.posZ);
 
-            List<org.bukkit.block.Block> blockList = Lists.newArrayList();
+            List<org.bukkit.block.Block> blockList = MappedBlockList.of(blocks, bworld); /*Lists.newArrayList();*/ // StarLink - reduce lists
+            // StarLink start - commented as useless, see above
+            /*
             for (int i1 = this.blocks.size() - 1; i1 >= 0; i1--) {
                 BlockPosition cpos = (BlockPosition) this.blocks.get(i1);
                 org.bukkit.block.Block bblock = bworld.getBlockAt(cpos.getX(), cpos.getY(), cpos.getZ());
@@ -237,6 +242,7 @@ public class Explosion {
                     blockList.add(bblock);
                 }
             }
+            */ // StartLink end
 
             boolean cancelled;
             List<org.bukkit.block.Block> bukkitBlocks;
@@ -256,12 +262,16 @@ public class Explosion {
                 yield = event.getYield();
             }
 
+            // StarLink start - commented as useless, see above
+            // Since no reuse cases of explosion was found, no need to clear the block list.
+            /*
             this.blocks.clear();
 
             for (org.bukkit.block.Block bblock : bukkitBlocks) {
                 BlockPosition coords = new BlockPosition(bblock.getX(), bblock.getY(), bblock.getZ());
                 blocks.add(coords);
             }
+            */ // StartLink end
 
             if (cancelled) {
                 this.wasCanceled = true;
@@ -275,8 +285,23 @@ public class Explosion {
                 IBlockData iblockdata = this.world.getType(blockposition);
                 Block block = iblockdata.getBlock();
 
-                if (!iblockdata.isAir()) {
+                if (true || !iblockdata.isAir()) { // StarLink - no airs here, see above
                     BlockPosition blockposition1 = blockposition.immutableCopy();
+                    // StarLink start - optimize igniting
+                    if (this.a && this.c.nextInt(3) == 0) {
+                        BlockPosition down = blockposition.down();
+                        if (this.world.getType(down).g(this.world, down)) {
+                            if (!org.bukkit.craftbukkit.event.CraftEventFactory.callBlockIgniteEvent(this.world, blockposition.getX(), blockposition.getY(), blockposition.getZ(), this).isCancelled()) {
+                                // Keep the vanilla logic order.
+                                block.wasExploded(this.world, blockposition, this);
+                                this.world.setTypeUpdate(blockposition, Blocks.FIRE.getBlockData());
+                                // Done with firing, or fallback to airing.
+                                // Also it is no need to drop items for fired blocks.
+                                continue;
+                            }
+                        }
+                    }
+                    // StarLink end
 
                     this.world.getMethodProfiler().enter("explosion_blocks");
                     if (block.a(this) && this.world instanceof WorldServer) {
@@ -308,12 +333,13 @@ public class Explosion {
         }
 
         if (this.a) {
-            Iterator iterator1 = this.blocks.iterator();
+            Iterator iterator1 = airIgnites/*this.blocks*/.iterator(); // StarLink - optimize, only iterating air ignites, see above
 
             while (iterator1.hasNext()) {
                 BlockPosition blockposition2 = (BlockPosition) iterator1.next();
 
-                if (this.c.nextInt(3) == 0 && this.world.getType(blockposition2).isAir() && this.world.getType(blockposition2.down()).g(this.world, blockposition2.down())) {
+                if (this.c.nextInt(3) == 0 /*&& this.world.getType(blockposition2).isAir() && this.world.getType(down).g(this.world, down)*/) { // StarLink - optimize igniting, already checked, see above
+                    BlockPosition down = blockposition2.down(); if (!this.world.getType(down).g(this.world, down)) continue; // StarLink - do not down twice
                     // CraftBukkit start - Ignition by explosion
                     if (!org.bukkit.craftbukkit.event.CraftEventFactory.callBlockIgniteEvent(this.world, blockposition2.getX(), blockposition2.getY(), blockposition2.getZ(), this).isCancelled()) {
                         this.world.setTypeUpdate(blockposition2, Blocks.FIRE.getBlockData());

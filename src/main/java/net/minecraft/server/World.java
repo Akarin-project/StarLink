@@ -67,6 +67,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     public long ticksPerMonsterSpawns;
     public boolean populating;
     public final org.spigotmc.SpigotWorldConfig spigotConfig; // Spigot
+    public final cc.bukkit.starlink.StarLinkWorldSettings starLinkSettings = new cc.bukkit.starlink.StarLinkWorldSettings(); // StarLink - add settings
 
     public final SpigotTimings.WorldTimingsHandler timings; // Spigot
     public static BlockPosition lastPhysicsProblem; // Spigot

@@ -18,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1308,9 +1309,10 @@ public class WorldServer extends World {
         explosion.a(false);
         */
         // CraftBukkit end - TODO: Check if explosions are still properly implemented
+        List<BlockPosition> blocks; // StarLink - optimize, see below
         if (explosion_effect == Explosion.Effect.NONE) {
-            explosion.clearBlocks();
-        }
+            blocks = Collections.emptyList(); //explosion.clearBlocks(); // StarLink - reduce list operation
+        } else blocks = explosion.getBlocks(); // StarLink - reduce list operation
 
         Iterator iterator = this.players.iterator();
 
@@ -1318,7 +1320,7 @@ public class WorldServer extends World {
             EntityPlayer entityplayer = (EntityPlayer) iterator.next();
 
             if (entityplayer.g(d0, d1, d2) < 4096.0D) {
-                entityplayer.playerConnection.sendPacket(new PacketPlayOutExplosion(d0, d1, d2, f, explosion.getBlocks(), (Vec3D) explosion.c().get(entityplayer)));
+                entityplayer.playerConnection.sendPacket(new PacketPlayOutExplosion(d0, d1, d2, f, blocks /*explosion.getBlocks()*/, (Vec3D) explosion.c().get(entityplayer))); // StarLink - optimize, see above
             }
         }
 
