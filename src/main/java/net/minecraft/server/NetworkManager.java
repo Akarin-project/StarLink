@@ -43,7 +43,8 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
     });
     private final EnumProtocolDirection h;
     private final Queue<NetworkManager.QueuedPacket> packetQueue = Queues.newConcurrentLinkedQueue();
-    private boolean handled = false;
+    private boolean handled = false; // StarLink - free packet queue
+    private EnumProtocol protocol; // StarLink - avoid map lookup
     public Channel channel;
     public SocketAddress socketAddress;
     // Spigot Start
@@ -84,6 +85,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
 
     public void setProtocol(EnumProtocol enumprotocol) {
         this.channel.attr(NetworkManager.c).set(enumprotocol);
+        protocol = enumprotocol; // StarLink - avoid map lookup
         this.channel.config().setAutoRead(true);
         NetworkManager.LOGGER.debug("Enabled auto read");
     }
@@ -161,8 +163,8 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
     }
 
     private void b(Packet<?> packet, @Nullable GenericFutureListener<? extends Future<? super Void>> genericfuturelistener) {
-        EnumProtocol enumprotocol = EnumProtocol.a(packet);
-        EnumProtocol enumprotocol1 = (EnumProtocol) this.channel.attr(NetworkManager.c).get();
+        EnumProtocol enumprotocol = packet.protocol();//EnumProtocol.a(packet); // StarLink - avoid map lookup
+        EnumProtocol enumprotocol1 = protocol;//(EnumProtocol) this.channel.attr(NetworkManager.c).get(); // StarLink - avoid map lookup
 
         ++this.q;
         if (enumprotocol1 != enumprotocol) {
