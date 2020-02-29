@@ -43,6 +43,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
     });
     private final EnumProtocolDirection h;
     private final Queue<NetworkManager.QueuedPacket> packetQueue = Queues.newConcurrentLinkedQueue();
+    private boolean handled = false;
     public Channel channel;
     public SocketAddress socketAddress;
     // Spigot Start
@@ -151,7 +152,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
 
     public void sendPacket(Packet<?> packet, @Nullable GenericFutureListener<? extends Future<? super Void>> genericfuturelistener) {
         if (this.isConnected()) {
-            this.o();
+            if (!handled) { this.o(); handled = true; } // StarLink - free packet queue
             this.b(packet, genericfuturelistener);
         } else {
             this.packetQueue.add(new NetworkManager.QueuedPacket(packet, genericfuturelistener));
@@ -215,7 +216,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
     }
 
     public void a() {
-        this.o();
+        if (!handled) this.o(); // StarLink - free packet queue
         if (this.packetListener instanceof LoginListener) {
             ((LoginListener) this.packetListener).tick();
         }
@@ -224,7 +225,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
             ((PlayerConnection) this.packetListener).tick();
         }
 
-        if (this.channel != null) {
+        if (false && this.channel != null) { // StarLink - already did
             this.channel.flush();
         }
 

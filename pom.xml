@@ -29,6 +29,13 @@
     </parent>
 
     <dependencies>
+    	<!-- StarLink start - update netty -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.47.Final-SNAPSHOT</version>
+        </dependency>
+        <!-- StarLink end -->
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
