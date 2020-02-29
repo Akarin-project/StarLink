@@ -1,6 +1,7 @@
 package net.minecraft.server;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 // CraftBukkit start
@@ -315,13 +316,14 @@ public class EntityBoat extends Entity {
         }
 
         this.checkBlockCollisions();
-        List<Entity> list = this.world.getEntities(this, this.getBoundingBox().grow(0.20000000298023224D, -0.009999999776482582D, 0.20000000298023224D), IEntitySelector.a(this));
+        //List<Entity> list = this.world.getEntities(this, this.getBoundingBox().grow(0.20000000298023224D, -0.009999999776482582D, 0.20000000298023224D), IEntitySelector.a(this)); // StarLink - use consumer
 
-        if (!list.isEmpty()) {
+        //if (!list.isEmpty()) { // StarLink - use consumer
             boolean flag = !this.world.isClientSide && !(this.getRidingPassenger() instanceof EntityHuman);
 
-            for (int j = 0; j < list.size(); ++j) {
-                Entity entity = (Entity) list.get(j);
+            //for (int j = 0; j < list.size(); ++j) { // StarLink - use consumer
+            Consumer<Entity> consumer = entity -> {
+                //Entity entity = (Entity) list.get(j); // StarLink - use consumer
 
                 if (!entity.w(this)) {
                     if (flag && this.getPassengers().size() < 2 && !entity.isPassenger() && entity.getWidth() < this.getWidth() && entity instanceof EntityLiving && !(entity instanceof EntityWaterAnimal) && !(entity instanceof EntityHuman)) {
@@ -330,8 +332,8 @@ public class EntityBoat extends Entity {
                         this.collide(entity);
                     }
                 }
-            }
-        }
+            }; this.world.getEntitiesWith(this, this.getBoundingBox().grow(0.20000000298023224D, -0.009999999776482582D, 0.20000000298023224D), IEntitySelector.a(this), consumer); // StarLink - use consumer
+        //} // StarLink - use consumer
 
     }
 

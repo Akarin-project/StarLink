@@ -100,7 +100,7 @@ public class EntityItemFrame extends EntityHanging {
         } else {
             IBlockData iblockdata = this.world.getType(this.blockPosition.shift(this.direction.opposite()));
 
-            return !iblockdata.getMaterial().isBuildable() && (!this.direction.m().c() || !BlockDiodeAbstract.isDiode(iblockdata)) ? false : this.world.getEntities(this, this.getBoundingBox(), EntityItemFrame.b).isEmpty();
+            return !iblockdata.getMaterial().isBuildable() && (!this.direction.m().c() || !BlockDiodeAbstract.isDiode(iblockdata)) ? false : this.world.hasEntities(this, this.getBoundingBox(), EntityItemFrame.b); // StarLink - use optimized method
         }
     }
 

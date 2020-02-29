@@ -2,6 +2,7 @@ package net.minecraft.server;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -311,15 +312,16 @@ public class EntityArmorStand extends EntityLiving {
 
     @Override
     protected void collideNearby() {
-        List<Entity> list = this.world.getEntities(this, this.getBoundingBox(), EntityArmorStand.bx);
+        //List<Entity> list = this.world.getEntities(this, this.getBoundingBox(), EntityArmorStand.bx); // StarLink - use consumer
 
-        for (int i = 0; i < list.size(); ++i) {
-            Entity entity = (Entity) list.get(i);
+        //for (int i = 0; i < list.size(); ++i) { // StarLink - use consumer
+        Consumer<Entity> consumer = entity -> {
+            //Entity entity = (Entity) list.get(i); // StarLink - use consumer
 
             if (this.h(entity) <= 0.2D) {
                 entity.collide(this);
             }
-        }
+        }; this.world.getEntitiesWith(this, this.getBoundingBox(), EntityArmorStand.bx, consumer); // StarLink - use consumer
 
     }
 

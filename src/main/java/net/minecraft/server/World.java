@@ -1009,22 +1009,45 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     }
     // StarLink start - with consumer, copied from above
     public void getEntitiesWith(@Nullable Entity entity, AxisAlignedBB axisalignedbb, Consumer<Entity> consumer) {
-      this.getMethodProfiler().c("getEntities");
-      int i = MathHelper.floor((axisalignedbb.minX - 2.0D) / 16.0D);
-      int j = MathHelper.floor((axisalignedbb.maxX + 2.0D) / 16.0D);
-      int k = MathHelper.floor((axisalignedbb.minZ - 2.0D) / 16.0D);
-      int l = MathHelper.floor((axisalignedbb.maxZ + 2.0D) / 16.0D);
+	getEntitiesWith(entity, axisalignedbb, IEntitySelector.f, consumer); // interface default
+    }
 
-      for (int i1 = i; i1 <= j; ++i1) {
-          for (int j1 = k; j1 <= l; ++j1) {
-              Chunk chunk = this.getChunkProvider().getChunkAt(i1, j1, false);
+    public void getEntitiesWith(@Nullable Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate, Consumer<Entity> consumer) {
+	this.getMethodProfiler().c("getEntities");
+	int i = MathHelper.floor((axisalignedbb.minX - 2.0D) / 16.0D);
+	int j = MathHelper.floor((axisalignedbb.maxX + 2.0D) / 16.0D);
+	int k = MathHelper.floor((axisalignedbb.minZ - 2.0D) / 16.0D);
+	int l = MathHelper.floor((axisalignedbb.maxZ + 2.0D) / 16.0D);
 
-              if (chunk != null) {
-                  chunk.getEntitiesWith(entity, axisalignedbb, IEntitySelector.f, consumer);
-              }
-          }
-      }
-  }
+	for (int i1 = i; i1 <= j; ++i1) {
+	    for (int j1 = k; j1 <= l; ++j1) {
+		Chunk chunk = this.getChunkProvider().getChunkAt(i1, j1, false);
+
+		if (chunk != null) {
+		    chunk.getEntitiesWith(entity, axisalignedbb, predicate, consumer);
+		}
+	    }
+	}
+    }
+
+    public boolean hasEntities(@Nullable Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate) {
+	this.getMethodProfiler().c("getEntities");
+	int i = MathHelper.floor((axisalignedbb.minX - 2.0D) / 16.0D);
+	int j = MathHelper.floor((axisalignedbb.maxX + 2.0D) / 16.0D);
+	int k = MathHelper.floor((axisalignedbb.minZ - 2.0D) / 16.0D);
+	int l = MathHelper.floor((axisalignedbb.maxZ + 2.0D) / 16.0D);
+
+	for (int i1 = i; i1 <= j; ++i1) {
+	    for (int j1 = k; j1 <= l; ++j1) {
+		Chunk chunk = this.getChunkProvider().getChunkAt(i1, j1, false);
+
+		if (chunk != null && chunk.hasEntities(entity, axisalignedbb, predicate)) {
+		    return true;
+		}
+	    }
+	}
+	return false;
+    }
     // StarLink end
 
     public <T extends Entity> List<T> a(@Nullable EntityTypes<T> entitytypes, AxisAlignedBB axisalignedbb, Predicate<? super T> predicate) {

@@ -6,6 +6,8 @@ import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+
 import javax.annotation.Nullable;
 
 // CraftBukkit start
@@ -290,11 +292,12 @@ public abstract class EntityMinecartAbstract extends Entity {
             }
             // CraftBukkit end
             if (this.getMinecartType() == EntityMinecartAbstract.EnumMinecartType.RIDEABLE && b(this.getMot()) > 0.01D) {
-                List<Entity> list = this.world.getEntities(this, this.getBoundingBox().grow(0.20000000298023224D, 0.0D, 0.20000000298023224D), IEntitySelector.a(this));
+                //List<Entity> list = this.world.getEntities(this, this.getBoundingBox().grow(0.20000000298023224D, 0.0D, 0.20000000298023224D), IEntitySelector.a(this)); // StarLink - use consumer
 
-                if (!list.isEmpty()) {
-                    for (int l = 0; l < list.size(); ++l) {
-                        Entity entity = (Entity) list.get(l);
+                //if (!list.isEmpty()) { // StarLink - use consumer
+                    //for (int l = 0; l < list.size(); ++l) { // StarLink - use consumer
+        	    Consumer<Entity> consumer = entity -> {
+                        //Entity entity = (Entity) list.get(l); // StarLink - use consumer
 
                         if (!(entity instanceof EntityHuman) && !(entity instanceof EntityIronGolem) && !(entity instanceof EntityMinecartAbstract) && !this.isVehicle() && !entity.isPassenger()) {
                             // CraftBukkit start
@@ -302,7 +305,7 @@ public abstract class EntityMinecartAbstract extends Entity {
                             this.world.getServer().getPluginManager().callEvent(collisionEvent);
 
                             if (collisionEvent.isCancelled()) {
-                                continue;
+                                return; // StarLink - use consumer, continue -> return
                             }
                             // CraftBukkit end
                             entity.startRiding(this);
@@ -313,14 +316,14 @@ public abstract class EntityMinecartAbstract extends Entity {
                                 this.world.getServer().getPluginManager().callEvent(collisionEvent);
 
                                 if (collisionEvent.isCancelled()) {
-                                    continue;
+                                    return; // StarLink - use consumer, continue -> return
                                 }
                             }
                             // CraftBukkit end
                             entity.collide(this);
                         }
-                    }
-                }
+                    }; this.world.getEntitiesWith(this, this.getBoundingBox().grow(0.20000000298023224D, 0.0D, 0.20000000298023224D), IEntitySelector.a(this), consumer); // StarLink - use consumer
+                //} // StarLink - use consumer
             } else {
                 Iterator iterator = this.world.getEntities(this, this.getBoundingBox().grow(0.20000000298023224D, 0.0D, 0.20000000298023224D)).iterator();
 
