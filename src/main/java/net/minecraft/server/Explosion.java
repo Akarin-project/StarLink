@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 // CraftBukkit start
@@ -154,11 +155,12 @@ public class Explosion {
         int i1 = MathHelper.floor(this.posY + (double) f3 + 1.0D);
         int j1 = MathHelper.floor(this.posZ - (double) f3 - 1.0D);
         int k1 = MathHelper.floor(this.posZ + (double) f3 + 1.0D);
-        List<Entity> list = this.world.getEntities(this.source, new AxisAlignedBB((double) i, (double) l, (double) j1, (double) j, (double) i1, (double) k1));
+        //List<Entity> list = this.world.getEntities(this.source, new AxisAlignedBB((double) i, (double) l, (double) j1, (double) j, (double) i1, (double) k1)); // StarLink - move down with consumer
         Vec3D vec3d = new Vec3D(this.posX, this.posY, this.posZ);
 
-        for (int l1 = 0; l1 < list.size(); ++l1) {
-            Entity entity = (Entity) list.get(l1);
+        //for (int l1 = 0; l1 < list.size(); ++l1) { // StarLink - use consumer
+        Consumer<Entity> consumer = entity -> {
+            //Entity entity = (Entity) list.get(l1); // StarLink - use consumer
 
             if (!entity.ca()) {
                 double d7 = (double) (MathHelper.sqrt(entity.c(vec3d)) / f3);
@@ -183,7 +185,7 @@ public class Explosion {
                         boolean wasDamaged = entity.damageEntity(this.b(), (float) ((int) ((d13 * d13 + d13) / 2.0D * 7.0D * (double) f3 + 1.0D)));
                         CraftEventFactory.entityDamage = null;
                         if (!wasDamaged && !(entity instanceof EntityTNTPrimed || entity instanceof EntityFallingBlock) && !entity.forceExplosionKnockback) {
-                            continue;
+                            return; // StarLink - use consumer, continue -> return
                         }
                         // CraftBukkit end
                         double d14 = d13;
@@ -203,7 +205,7 @@ public class Explosion {
                     }
                 }
             }
-        }
+        }; this.world.getEntitiesWith(this.source, new AxisAlignedBB((double) i, (double) l, (double) j1, (double) j, (double) i1, (double) k1), consumer); // StarLink - use consumer, moved from above
 
     }
 

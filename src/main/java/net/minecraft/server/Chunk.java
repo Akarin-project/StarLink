@@ -589,6 +589,45 @@ public class Chunk implements IChunkAccess {
         }
 
     }
+    // StarLink start - with consumer, copied from above
+    public void getEntitiesWith(@Nullable Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate, Consumer<Entity> consumer) {
+      int i = MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D);
+      int j = MathHelper.floor((axisalignedbb.maxY + 2.0D) / 16.0D);
+
+      i = MathHelper.clamp(i, 0, this.entitySlices.length - 1);
+      j = MathHelper.clamp(j, 0, this.entitySlices.length - 1);
+
+      for (int k = i; k <= j; ++k) {
+          if (!this.entitySlices[k].isEmpty()) {
+              Iterator<Entity> iterator = this.entitySlices[k].iterator();
+
+              while (iterator.hasNext()) {
+                  Entity entity1 = (Entity) iterator.next();
+
+                  if (entity1.getBoundingBox().c(axisalignedbb) && entity1 != entity) {
+                      if (predicate == null || predicate.test(entity1)) {
+                          consumer.accept(entity1);
+                      }
+
+                      if (entity1 instanceof EntityEnderDragon) {
+                          EntityComplexPart[] aentitycomplexpart = ((EntityEnderDragon) entity1).eo();
+                          int l = aentitycomplexpart.length;
+
+                          for (int i1 = 0; i1 < l; ++i1) {
+                              EntityComplexPart entitycomplexpart = aentitycomplexpart[i1];
+
+                              if (entitycomplexpart != entity && entitycomplexpart.getBoundingBox().c(axisalignedbb) && (predicate == null || predicate.test(entitycomplexpart))) {
+                                  consumer.accept(entitycomplexpart);
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+
+  }
+  // StarLink end
 
     public <T extends Entity> void a(@Nullable EntityTypes<?> entitytypes, AxisAlignedBB axisalignedbb, List<? super T> list, Predicate<? super T> predicate) {
         int i = MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D);
