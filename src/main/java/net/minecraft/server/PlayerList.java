@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
+
+import cc.bukkit.starlink.PacketStream;
 import io.netty.buffer.Unpooled;
 import java.io.File;
 import java.net.SocketAddress;
@@ -16,6 +18,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
+
+import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -568,11 +572,12 @@ public abstract class PlayerList {
 
     public EntityPlayer moveToWorld(EntityPlayer entityplayer, DimensionManager dimensionmanager, boolean flag, Location location, boolean avoidSuffocation) {
         entityplayer.stopRiding(); // CraftBukkit
-        this.players.remove(entityplayer);
-        this.playersByName.remove(entityplayer.getName().toLowerCase(java.util.Locale.ROOT)); // Spigot
+        //this.players.remove(entityplayer); // StarLink
+        //this.playersByName.remove(entityplayer.getName().toLowerCase(java.util.Locale.ROOT)); // Spigot // StarLink
         entityplayer.getWorldServer().removePlayer(entityplayer);
         BlockPosition blockposition = entityplayer.getBed();
         boolean flag1 = entityplayer.isRespawnForced();
+        PacketStream stream = PacketStream.create(); // StarLink
 
         /* CraftBukkit start
         entityplayer.dimension = dimensionmanager;
@@ -591,6 +596,8 @@ public abstract class PlayerList {
         entityplayer.viewingCredits = false;
         // CraftBukkit end
 
+        // StarLink start
+        /*
         entityplayer1.playerConnection = entityplayer.playerConnection;
         entityplayer1.copyFrom(entityplayer, flag);
         entityplayer1.e(entityplayer.getId());
@@ -602,6 +609,8 @@ public abstract class PlayerList {
 
             entityplayer1.addScoreboardTag(s);
         }
+        */
+        // StarLink end
 
         // WorldServer worldserver = this.server.getWorldServer(entityplayer.dimension);  // CraftBukkit - handled later
 
@@ -621,7 +630,7 @@ public abstract class PlayerList {
                     location = new Location(cworld, vec3d.x, vec3d.y, vec3d.z);
                 } else {
                     entityplayer1.setRespawnPosition(null, true, false);
-                    entityplayer1.playerConnection.sendPacket(new PacketPlayOutGameStateChange(0, 0.0F));
+                    //stream.flow(new PacketPlayOutGameStateChange(0, 0.0F)); // StarLink
                 }
             }
 
@@ -654,45 +663,52 @@ public abstract class PlayerList {
         }
         // CraftBukkit start
         // Force the client to refresh their chunk cache
-        if (fromWorld.getEnvironment() == worldserver.getWorld().getEnvironment()) {
+        if (false && fromWorld.getEnvironment() == worldserver.getWorld().getEnvironment()) { // StarLink
             entityplayer1.playerConnection.sendPacket(new PacketPlayOutRespawn(worldserver.worldProvider.getDimensionManager().getDimensionID() >= 0 ? DimensionManager.NETHER : DimensionManager.OVERWORLD, WorldData.c(worldserver.getWorldData().getSeed()), worldserver.getWorldData().getType(), entityplayer.playerInteractManager.getGameMode()));
         }
 
         WorldData worlddata = worldserver.getWorldData();
 
-        entityplayer1.playerConnection.sendPacket(new PacketPlayOutRespawn(worldserver.worldProvider.getDimensionManager().getType(),  WorldData.c(worldserver.getWorldData().getSeed()), worldserver.getWorldData().getType(), entityplayer1.playerInteractManager.getGameMode()));
-        entityplayer1.playerConnection.sendPacket(new PacketPlayOutViewDistance(worldserver.spigotConfig.viewDistance)); // Spigot
+        // StarLink start
+        //stream.flow(new PacketPlayOutRespawn(worldserver.worldProvider.getDimensionManager().getType(),  WorldData.c(worldserver.getWorldData().getSeed()), worldserver.getWorldData().getType(), entityplayer1.playerInteractManager.getGameMode()));
+        stream.flow(new PacketPlayOutViewDistance(worldserver.spigotConfig.viewDistance)); // Spigot
+        // StarLink end
         entityplayer1.spawnIn(worldserver);
         entityplayer1.dead = false;
-        entityplayer1.playerConnection.teleport(new Location(worldserver.getWorld(), entityplayer1.locX(), entityplayer1.locY(), entityplayer1.locZ(), entityplayer1.yaw, entityplayer1.pitch));
+        //entityplayer1.playerConnection.teleport(new Location(worldserver.getWorld(), entityplayer1.locX(), entityplayer1.locY(), entityplayer1.locZ(), entityplayer1.yaw, entityplayer1.pitch)); // StarLink
         entityplayer1.setSneaking(false);
         BlockPosition blockposition1 = worldserver.getSpawn();
 
         // entityplayer1.playerConnection.a(entityplayer1.locX(), entityplayer1.locY(), entityplayer1.locZ(), entityplayer1.yaw, entityplayer1.pitch);
-        entityplayer1.playerConnection.sendPacket(new PacketPlayOutSpawnPosition(blockposition1));
-        entityplayer1.playerConnection.sendPacket(new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()));
-        entityplayer1.playerConnection.sendPacket(new PacketPlayOutExperience(entityplayer1.exp, entityplayer1.expTotal, entityplayer1.expLevel));
+        // StarLink start
+        entityplayer1.compassTarget = new Location(worldserver.getWorld(), blockposition1.getX(), blockposition1.getY(), blockposition1.getZ());
+        stream
+            .flow(new PacketPlayOutSpawnPosition(blockposition1)) // Even this is unnecessary
+            .flow(new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()))
+            .flow(new PacketPlayOutExperience(entityplayer1.exp, entityplayer1.expTotal, entityplayer1.expLevel));
+        // StarLink end
         this.a(entityplayer1, worldserver);
         this.d(entityplayer1);
         if (!entityplayer.playerConnection.isDisconnected()) {
             worldserver.addPlayerRespawn(entityplayer1);
-            this.players.add(entityplayer1);
-            this.playersByName.put(entityplayer1.getName().toLowerCase(java.util.Locale.ROOT), entityplayer1); // Spigot
+            //this.players.add(entityplayer1); // StarLink
+            //this.playersByName.put(entityplayer1.getName().toLowerCase(java.util.Locale.ROOT), entityplayer1); // Spigot // StarLink
             this.j.put(entityplayer1.getUniqueID(), entityplayer1);
         }
         // entityplayer1.syncInventory();
-        entityplayer1.setHealth(entityplayer1.getHealth());
+        entityplayer1.setPlayerRealHealth(entityplayer1.getHealth()); // StarLink
         // Added from changeDimension
-        updateClient(entityplayer); // Update health, etc...
-        entityplayer.updateAbilities();
+        updateClientFlows(entityplayer, stream); // Update health, etc...
+        entityplayer.updateAbilitiesFlows(stream);
         for (Object o1 : entityplayer.getEffects()) {
             MobEffect mobEffect = (MobEffect) o1;
-            entityplayer.playerConnection.sendPacket(new PacketPlayOutEntityEffect(entityplayer.getId(), mobEffect));
+            stream.flow(new PacketPlayOutEntityEffect(entityplayer.getId(), mobEffect));
         }
 
         // Fire advancement trigger
         entityplayer.triggerDimensionAdvancements(((CraftWorld) fromWorld).getHandle());
 
+        stream.send(entityplayer.playerConnection.networkManager); // StarLink - send before this event
         // Don't fire on respawn
         if (fromWorld != location.getWorld()) {
             PlayerChangedWorldEvent event = new PlayerChangedWorldEvent(entityplayer.getBukkitEntity(), fromWorld);
@@ -954,6 +970,15 @@ public abstract class PlayerList {
         entityplayer.playerConnection.sendPacket(new PacketPlayOutEntityStatus(entityplayer, (byte) i));
         // CraftBukkit end
     }
+    // StarLink start
+    public void updateClientFlows(EntityPlayer entityplayer, PacketStream stream) {
+        entityplayer.updateInventoryFlows(entityplayer.defaultContainer, stream);
+        entityplayer.getBukkitEntity().updateScaledHealthFlows(stream);
+        stream.flow(new PacketPlayOutHeldItemSlot(entityplayer.inventory.itemInHandIndex));
+        int i = entityplayer.world.getGameRules().getBoolean(GameRules.REDUCED_DEBUG_INFO) ? 22 : 23;
+        stream.flow(new PacketPlayOutEntityStatus(entityplayer, (byte) i));
+    }
+    // StarLink end
 
     public int getPlayerCount() {
         return this.players.size();

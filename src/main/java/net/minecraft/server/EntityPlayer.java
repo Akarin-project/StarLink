@@ -3,6 +3,8 @@ package net.minecraft.server;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.datafixers.util.Either;
+
+import cc.bukkit.starlink.PacketStream;
 import io.netty.util.concurrent.Future;
 import java.util.Collection;
 import java.util.Iterator;
@@ -1138,14 +1140,40 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
 
     @Override
     public void a(Container container, NonNullList<ItemStack> nonnulllist) {
-        this.playerConnection.sendPacket(new PacketPlayOutWindowItems(container.windowId, nonnulllist));
-        this.playerConnection.sendPacket(new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()));
+	// StarLink start
+        // this.playerConnection.sendPacket(new PacketPlayOutWindowItems(container.windowId, nonnulllist));
+        // this.playerConnection.sendPacket(new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()));
+	// StarLink end
         // CraftBukkit start - Send a Set Slot to update the crafting result slot
         if (java.util.EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
-            this.playerConnection.sendPacket(new PacketPlayOutSetSlot(container.windowId, 0, container.getSlot(0).getItem()));
+        // StarLink start
+            this.playerConnection.networkManager.sendPackets(
+                new PacketPlayOutWindowItems(container.windowId, nonnulllist),
+                new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()),
+                new PacketPlayOutSetSlot(container.windowId, 0, container.getSlot(0).getItem()));
+        // StarLink end
         }
+        // StarLink start
+        else {
+            this.playerConnection.networkManager.sendPackets(
+                new PacketPlayOutWindowItems(container.windowId, nonnulllist),
+                new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()));
+        }
+        // StarLink end
         // CraftBukkit end
     }
+    // StarLink start
+    public void updateInventoryFlows(Container container, PacketStream stream) {
+	NonNullList<ItemStack> items = container.b();
+	
+	stream.flow(new PacketPlayOutWindowItems(container.windowId, items))
+	      .flow(new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()));
+	
+        if (java.util.EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
+            stream.flow(new PacketPlayOutSetSlot(container.windowId, 0, container.getSlot(0).getItem()));
+        }
+    }
+    // StarLink end
 
     @Override
     public void setContainerData(Container container, int i, int j) {
@@ -1378,6 +1406,14 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
             this.C();
         }
     }
+    // StarLink start
+    public void updateAbilitiesFlows(PacketStream stream) {
+        if (this.playerConnection != null) {
+            stream.flow(new PacketPlayOutAbilities(this.abilities));
+            this.C();
+        }
+    }
+    // StarLink end
 
     public WorldServer getWorldServer() {
         return (WorldServer) this.world;

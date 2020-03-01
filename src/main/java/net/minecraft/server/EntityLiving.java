@@ -961,6 +961,20 @@ public abstract class EntityLiving extends Entity {
         // CraftBukkit end
         this.datawatcher.set(EntityLiving.HEALTH, MathHelper.a(f, 0.0F, this.getMaxHealth()));
     }
+    // StarLink start
+    public void setPlayerRealHealth(float f) {
+        org.bukkit.craftbukkit.entity.CraftPlayer player = ((EntityPlayer) this).getBukkitEntity();
+        // Squeeze
+        if (f < 0.0F) {
+            player.setRealHealth(0.0D);
+        } else if (f > player.getMaxHealth()) {
+            player.setRealHealth(player.getMaxHealth());
+        } else {
+            player.setRealHealth(f);
+        }
+        return;
+    }
+    // StarLink end
 
     @Override
     public boolean damageEntity(DamageSource damagesource, float f) {

@@ -242,7 +242,89 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
             this.channel.flush();
         });
     }
-    // StarLink end
+    
+    public void sendPackets(Iterable<Packet<?>> packets) {
+        ++this.q;
+        
+        this.channel.eventLoop().execute(() -> {
+            for (Packet<?> packet : packets) {
+        	
+        	EnumProtocol packetProtocol = packet.protocol();
+                if (packetProtocol != protocol) {
+                    NetworkManager.LOGGER.debug("Disabled auto read");
+                    this.channel.config().setAutoRead(false);
+                    this.setProtocol(packetProtocol);
+                }
+                
+                this.channel.write(packets);
+            }
+            this.channel.flush();
+        });
+    }
+    
+    public void sendPackets(Packet<?> packet, Packet<?> packet1, Packet<?> packet2, Packet<?> packet3, Packet<?> packet4) {
+        EnumProtocol enumprotocol = packet.protocol();
+
+        ++this.q;
+        if (protocol != enumprotocol) {
+            NetworkManager.LOGGER.debug("Disabled auto read");
+            this.channel.config().setAutoRead(false);
+        }
+
+        this.channel.eventLoop().execute(() -> {
+            if (enumprotocol != protocol) {
+                this.setProtocol(enumprotocol);
+            }
+
+            this.channel.write(packet).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet1).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet2).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet3).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet4).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.flush();
+        });
+    }
+    
+    public void sendPackets(Packet<?> packet, Packet<?> packet1, Packet<?> packet2) {
+        EnumProtocol enumprotocol = packet.protocol();
+
+        ++this.q;
+        if (protocol != enumprotocol) {
+            NetworkManager.LOGGER.debug("Disabled auto read");
+            this.channel.config().setAutoRead(false);
+        }
+
+        this.channel.eventLoop().execute(() -> {
+            if (enumprotocol != protocol) {
+                this.setProtocol(enumprotocol);
+            }
+
+            this.channel.write(packet).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet1).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet2).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.flush();
+        });
+    }
+    
+    public void sendPackets(Packet<?> packet, Packet<?> packet1) {
+        EnumProtocol enumprotocol = packet.protocol();
+
+        ++this.q;
+        if (protocol != enumprotocol) {
+            NetworkManager.LOGGER.debug("Disabled auto read");
+            this.channel.config().setAutoRead(false);
+        }
+
+        this.channel.eventLoop().execute(() -> {
+            if (enumprotocol != protocol) {
+                this.setProtocol(enumprotocol);
+            }
+
+            this.channel.write(packet).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet1).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.flush();
+        });
+    }
 
     private void o() {
         if (this.channel != null && this.channel.isOpen()) {

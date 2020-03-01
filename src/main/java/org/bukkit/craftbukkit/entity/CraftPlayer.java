@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.BaseEncoding;
 import com.mojang.authlib.GameProfile;
+
+import cc.bukkit.starlink.PacketStream;
 import io.netty.buffer.Unpooled;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -1503,15 +1505,34 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
         // SPIGOT-3813: Attributes before health
         if (getHandle().playerConnection != null) {
-            getHandle().playerConnection.sendPacket(new PacketPlayOutUpdateAttributes(getHandle().getId(), set));
+            //getHandle().playerConnection.sendPacket(new PacketPlayOutUpdateAttributes(getHandle().getId(), set)); // StarLink
             if (sendHealth) {
-                sendHealthUpdate();
-            }
+        	// StarLink start
+        	getHandle().playerConnection.networkManager.sendPackets(
+        	    new PacketPlayOutUpdateAttributes(getHandle().getId(), set),
+        	    new PacketPlayOutUpdateHealth(getScaledHealth(), getHandle().getFoodData().getFoodLevel(), getHandle().getFoodData().getSaturationLevel()));
+            } else { getHandle().playerConnection.sendPacket(new PacketPlayOutUpdateAttributes(getHandle().getId(), set)); }
+            // StarLink end
         }
         getHandle().getDataWatcher().set(EntityLiving.HEALTH, (float) getScaledHealth());
 
         getHandle().maxHealthCache = getMaxHealth();
     }
+    // StarLink start
+    public void updateScaledHealthFlows(PacketStream stream) {
+        AttributeMapServer attributemapserver = (AttributeMapServer) getHandle().getAttributeMap();
+        Collection<AttributeInstance> set = attributemapserver.c();
+
+        injectScaledMaxHealth(set, true);
+        if (getHandle().playerConnection != null) {
+            stream.flow(new PacketPlayOutUpdateAttributes(getHandle().getId(), set))
+        	  .flow(new PacketPlayOutUpdateHealth(getScaledHealth(), getHandle().getFoodData().getFoodLevel(), getHandle().getFoodData().getSaturationLevel()));
+        }
+        getHandle().getDataWatcher().set(EntityLiving.HEALTH, (float) getScaledHealth());
+
+        getHandle().maxHealthCache = getMaxHealth();
+    }
+    // StarLink end
 
     public void sendHealthUpdate() {
         getHandle().playerConnection.sendPacket(new PacketPlayOutUpdateHealth(getScaledHealth(), getHandle().getFoodData().getFoodLevel(), getHandle().getFoodData().getSaturationLevel()));
