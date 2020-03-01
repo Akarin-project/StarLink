@@ -96,6 +96,18 @@ public class LoginListener implements PacketLoginInListener {
         }
 
     }
+    // StarLink start - avoid thread switching, copied from above
+    public void disconnectAsync(IChatBaseComponent ichatbasecomponent) {
+        try {
+            LoginListener.LOGGER.info("Disconnecting {}: {}", this.d(), ichatbasecomponent.getString());
+            this.networkManager.sendPacketAsync(new PacketLoginOutDisconnect(ichatbasecomponent));
+            this.networkManager.close(ichatbasecomponent);
+        } catch (Exception exception) {
+            LoginListener.LOGGER.error("Error whilst disconnecting player", exception);
+        }
+
+    }
+    // StarLink end
 
     // Spigot start
     public void initUUID()
@@ -172,7 +184,7 @@ public class LoginListener implements PacketLoginInListener {
         this.i = packetlogininstart.b();
         if (this.server.getOnlineMode() && !this.networkManager.isLocal()) {
             this.g = LoginListener.EnumProtocolState.KEY;
-            this.networkManager.sendPacket(new PacketLoginOutEncryptionBegin("", this.server.getKeyPair().getPublic(), this.e));
+            this.networkManager.sendPacketAsync(new PacketLoginOutEncryptionBegin("", this.server.getKeyPair().getPublic(), this.e)); // StarLink - optimize packet sending
         } else {
             // Spigot start
             new Thread("User Authenticator #" + LoginListener.b.incrementAndGet()) {
@@ -224,7 +236,7 @@ public class LoginListener implements PacketLoginInListener {
                             LoginListener.this.i = LoginListener.this.a(gameprofile);
                             LoginListener.this.g = LoginListener.EnumProtocolState.READY_TO_ACCEPT;
                         } else {
-                            LoginListener.this.disconnect(new ChatMessage("multiplayer.disconnect.unverified_username", new Object[0]));
+                            LoginListener.this.disconnectAsync(new ChatMessage("multiplayer.disconnect.unverified_username", new Object[0])); // StarLink
                             LoginListener.LOGGER.error("Username '{}' tried to join with an invalid session", gameprofile.getName());
                         }
                     } catch (AuthenticationUnavailableException authenticationunavailableexception) {
@@ -233,7 +245,7 @@ public class LoginListener implements PacketLoginInListener {
                             LoginListener.this.i = LoginListener.this.a(gameprofile);
                             LoginListener.this.g = LoginListener.EnumProtocolState.READY_TO_ACCEPT;
                         } else {
-                            LoginListener.this.disconnect(new ChatMessage("multiplayer.disconnect.authservers_down", new Object[0]));
+                            LoginListener.this.disconnectAsync(new ChatMessage("multiplayer.disconnect.authservers_down", new Object[0])); // StarLink
                             LoginListener.LOGGER.error("Couldn't verify username because servers are unavailable");
                         }
                         // CraftBukkit start - catch all exceptions
@@ -301,7 +313,7 @@ public class LoginListener implements PacketLoginInListener {
     // Spigot end
 
     public void a(PacketLoginInCustomPayload packetloginincustompayload) {
-        this.disconnect(new ChatMessage("multiplayer.disconnect.unexpected_query_response", new Object[0]));
+        this.disconnectAsync(new ChatMessage("multiplayer.disconnect.unexpected_query_response", new Object[0])); // StarLink
     }
 
     protected GameProfile a(GameProfile gameprofile) {

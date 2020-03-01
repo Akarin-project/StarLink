@@ -131,14 +131,14 @@ public class PacketStatusListener implements PacketStatusInListener {
             int version = SharedConstants.getGameVersion().getProtocolVersion();
             ping.setServerInfo(new ServerPing.ServerData(minecraftServer.getServerModName() + " " + minecraftServer.getVersion(), version));
 
-            this.networkManager.sendPacket(new PacketStatusOutServerInfo(ping));
+            this.networkManager.sendPacketAsync(new PacketStatusOutServerInfo(ping)); // StarLink
         }
         // CraftBukkit end
     }
 
     @Override
     public void a(PacketStatusInPing packetstatusinping) {
-        this.networkManager.sendPacket(new PacketStatusOutPong(packetstatusinping.b()));
+        this.networkManager.sendPacketAsync(new PacketStatusOutPong(packetstatusinping.b())); // StarLink
         this.networkManager.close(PacketStatusListener.a);
     }
 }

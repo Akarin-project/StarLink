@@ -143,12 +143,14 @@ public abstract class PlayerList {
         // Spigot - view distance
         playerconnection.sendPacket(new PacketPlayOutLogin(entityplayer.getId(), entityplayer.playerInteractManager.getGameMode(), WorldData.c(worlddata.getSeed()), worlddata.isHardcore(), worldserver.worldProvider.getDimensionManager().getType(), this.getMaxPlayers(), worlddata.getType(), worldserver.spigotConfig.viewDistance, flag1, !flag));
         entityplayer.getBukkitEntity().sendSupportedChannels(); // CraftBukkit
-        playerconnection.sendPacket(new PacketPlayOutCustomPayload(PacketPlayOutCustomPayload.a, (new PacketDataSerializer(Unpooled.buffer())).a(this.getServer().getServerModName())));
-        playerconnection.sendPacket(new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()));
-        playerconnection.sendPacket(new PacketPlayOutAbilities(entityplayer.abilities));
-        playerconnection.sendPacket(new PacketPlayOutHeldItemSlot(entityplayer.inventory.itemInHandIndex));
-        playerconnection.sendPacket(new PacketPlayOutRecipeUpdate(this.server.getCraftingManager().b()));
-        playerconnection.sendPacket(new PacketPlayOutTags(this.server.getTagRegistry()));
+        // StarLink start
+        playerconnection.networkManager.sendPackets(new PacketPlayOutCustomPayload(PacketPlayOutCustomPayload.a, (new PacketDataSerializer(Unpooled.buffer())).a(this.getServer().getServerModName())),
+        new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()),
+        new PacketPlayOutAbilities(entityplayer.abilities),
+        new PacketPlayOutHeldItemSlot(entityplayer.inventory.itemInHandIndex),
+        new PacketPlayOutRecipeUpdate(this.server.getCraftingManager().b()),
+        new PacketPlayOutTags(this.server.getTagRegistry()));
+        // StarLink end
         this.d(entityplayer);
         entityplayer.getStatisticManager().c();
         entityplayer.B().a(entityplayer);

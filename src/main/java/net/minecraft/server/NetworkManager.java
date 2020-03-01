@@ -172,7 +172,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
             this.channel.config().setAutoRead(false);
         }
 
-        if (this.channel.eventLoop().inEventLoop()) {
+        if (false && this.channel.eventLoop().inEventLoop()) { // StarLink
             if (enumprotocol != enumprotocol1) {
                 this.setProtocol(enumprotocol);
             }
@@ -201,6 +201,48 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
         }
 
     }
+    // StarLink start - multiple packets, copied from above
+    public void sendPacketAsync(Packet<?> packet) {
+        EnumProtocol enumprotocol = packet.protocol();
+        EnumProtocol enumprotocol1 = protocol;
+
+        ++this.q;
+        if (enumprotocol1 != enumprotocol) {
+            NetworkManager.LOGGER.debug("Disabled auto read");
+            this.channel.config().setAutoRead(false);
+            this.setProtocol(enumprotocol);
+        }
+
+        ChannelFuture channelfuture = this.channel.writeAndFlush(packet);
+
+        channelfuture.addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+
+    }
+    
+    public void sendPackets(Packet<?> packet, Packet<?> packet1, Packet<?> packet2, Packet<?> packet3, Packet<?> packet4, Packet<?> packet5) {
+        EnumProtocol enumprotocol = packet.protocol();
+
+        ++this.q;
+        if (protocol != enumprotocol) {
+            NetworkManager.LOGGER.debug("Disabled auto read");
+            this.channel.config().setAutoRead(false);
+        }
+
+        this.channel.eventLoop().execute(() -> {
+            if (enumprotocol != protocol) {
+                this.setProtocol(enumprotocol);
+            }
+
+            this.channel.write(packet).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet1).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet2).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet3).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet4).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.write(packet5).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+            this.channel.flush();
+        });
+    }
+    // StarLink end
 
     private void o() {
         if (this.channel != null && this.channel.isOpen()) {

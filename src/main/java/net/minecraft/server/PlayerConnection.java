@@ -270,9 +270,9 @@ public class PlayerConnection implements PacketListenerPlayIn {
         MinecraftServer minecraftserver = this.minecraftServer;
         NetworkManager networkmanager = this.networkManager;
 
-        this.networkManager.getClass();
+        //this.networkManager.getClass(); // StarLink - remove magic stuff
         // CraftBukkit - Don't wait
-        minecraftserver.postToMainThread(networkmanager::handleDisconnection);
+        //minecraftserver.postToMainThread(networkmanager::handleDisconnection); // StarLink - already did
     }
 
     @Override

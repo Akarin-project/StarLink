@@ -38,7 +38,7 @@ public class HandshakeListener implements PacketHandshakingInListener {
                         if (throttleTracker.containsKey(address) && !"127.0.0.1".equals(address.getHostAddress()) && currentTime - throttleTracker.get(address) < connectionThrottle) {
                             throttleTracker.put(address, currentTime);
                             chatmessage = new ChatMessage("Connection throttled! Please wait before reconnecting.");
-                            this.b.sendPacket(new PacketLoginOutDisconnect(chatmessage));
+                            this.b.sendPacketAsync(new PacketLoginOutDisconnect(chatmessage)); // StarLink
                             this.b.close(chatmessage);
                             return;
                         }
@@ -65,11 +65,11 @@ public class HandshakeListener implements PacketHandshakingInListener {
 
                 if (packethandshakinginsetprotocol.c() > SharedConstants.getGameVersion().getProtocolVersion()) {
                     chatmessage = new ChatMessage( java.text.MessageFormat.format( org.spigotmc.SpigotConfig.outdatedServerMessage.replaceAll("'", "''"), SharedConstants.getGameVersion().getName() ) ); // Spigot
-                    this.b.sendPacket(new PacketLoginOutDisconnect(chatmessage));
+                    this.b.sendPacketAsync(new PacketLoginOutDisconnect(chatmessage)); // StarLink
                     this.b.close(chatmessage);
                 } else if (packethandshakinginsetprotocol.c() < SharedConstants.getGameVersion().getProtocolVersion()) {
                     chatmessage = new ChatMessage( java.text.MessageFormat.format( org.spigotmc.SpigotConfig.outdatedClientMessage.replaceAll("'", "''"), SharedConstants.getGameVersion().getName() ) ); // Spigot
-                    this.b.sendPacket(new PacketLoginOutDisconnect(chatmessage));
+                    this.b.sendPacketAsync(new PacketLoginOutDisconnect(chatmessage)); // StarLink
                     this.b.close(chatmessage);
                 } else {
                     this.b.setPacketListener(new LoginListener(this.a, this.b));
