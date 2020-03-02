@@ -1147,33 +1147,21 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         // CraftBukkit start - Send a Set Slot to update the crafting result slot
         if (java.util.EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
         // StarLink start
-            this.playerConnection.networkManager.sendPackets(
-                new PacketPlayOutWindowItems(container.windowId, nonnulllist),
-                new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()),
-                new PacketPlayOutSetSlot(container.windowId, 0, container.getSlot(0).getItem()));
+            PacketStream.from(this)
+                .write(new PacketPlayOutWindowItems(container.windowId, nonnulllist))
+                .write(new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()))
+                .writeAndFlush(new PacketPlayOutSetSlot(container.windowId, 0, container.getSlot(0).getItem()));
         // StarLink end
         }
         // StarLink start
         else {
-            this.playerConnection.networkManager.sendPackets(
-                new PacketPlayOutWindowItems(container.windowId, nonnulllist),
-                new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()));
+            PacketStream.from(this)
+                .write(new PacketPlayOutWindowItems(container.windowId, nonnulllist))
+                .writeAndFlush(new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()));
         }
         // StarLink end
         // CraftBukkit end
     }
-    // StarLink start
-    public void updateInventoryFlows(Container container, PacketStream stream) {
-	NonNullList<ItemStack> items = container.b();
-	
-	stream.flow(new PacketPlayOutWindowItems(container.windowId, items))
-	      .flow(new PacketPlayOutSetSlot(-1, -1, this.inventory.getCarried()));
-	
-        if (java.util.EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
-            stream.flow(new PacketPlayOutSetSlot(container.windowId, 0, container.getSlot(0).getItem()));
-        }
-    }
-    // StarLink end
 
     @Override
     public void setContainerData(Container container, int i, int j) {
@@ -1402,18 +1390,10 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
     @Override
     public void updateAbilities() {
         if (this.playerConnection != null) {
-            this.playerConnection.sendPacket(new PacketPlayOutAbilities(this.abilities));
+            this.playerConnection.networkManager.stream().writeAndFlush(new PacketPlayOutAbilities(this.abilities)); // StarLink
             this.C();
         }
     }
-    // StarLink start
-    public void updateAbilitiesFlows(PacketStream stream) {
-        if (this.playerConnection != null) {
-            stream.flow(new PacketPlayOutAbilities(this.abilities));
-            this.C();
-        }
-    }
-    // StarLink end
 
     public WorldServer getWorldServer() {
         return (WorldServer) this.world;
@@ -1730,9 +1710,9 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         }
 
         if (type == WeatherType.DOWNFALL) {
-            this.playerConnection.sendPacket(new PacketPlayOutGameStateChange(2, 0));
+            this.playerConnection.networkManager.stream().writeAndFlush(new PacketPlayOutGameStateChange(2, 0)); // StarLink
         } else {
-            this.playerConnection.sendPacket(new PacketPlayOutGameStateChange(1, 0));
+            this.playerConnection.networkManager.stream().writeAndFlush(new PacketPlayOutGameStateChange(1, 0)); // StarLink
         }
     }
 
@@ -1743,20 +1723,20 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         if (this.weather == null) {
             // Vanilla
             if (oldRain != newRain) {
-                this.playerConnection.sendPacket(new PacketPlayOutGameStateChange(7, newRain));
+                this.playerConnection.networkManager.stream().write(new PacketPlayOutGameStateChange(7, newRain)); // StarLink
             }
         } else {
             // Plugin
             if (pluginRainPositionPrevious != pluginRainPosition) {
-                this.playerConnection.sendPacket(new PacketPlayOutGameStateChange(7, pluginRainPosition));
+                this.playerConnection.networkManager.stream().write(new PacketPlayOutGameStateChange(7, pluginRainPosition)); // StarLink
             }
         }
 
         if (oldThunder != newThunder) {
             if (weather == WeatherType.DOWNFALL || weather == null) {
-                this.playerConnection.sendPacket(new PacketPlayOutGameStateChange(8, newThunder));
+                this.playerConnection.networkManager.stream().writeAndFlush(new PacketPlayOutGameStateChange(8, newThunder)); // StarLink
             } else {
-                this.playerConnection.sendPacket(new PacketPlayOutGameStateChange(8, 0));
+                this.playerConnection.networkManager.stream().writeAndFlush(new PacketPlayOutGameStateChange(8, 0)); // StarLink
             }
         }
     }

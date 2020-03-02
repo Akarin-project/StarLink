@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import io.netty.channel.ChannelFuture;
@@ -11,6 +12,8 @@ import java.security.PrivateKey;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.crypto.SecretKey;
@@ -39,6 +42,7 @@ public class LoginListener implements PacketLoginInListener {
     private SecretKey loginKey;
     private EntityPlayer l;
     public String hostname = ""; // CraftBukkit - add field
+    private final ExecutorService authenticator = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("User Authenticator #" + LoginListener.b.incrementAndGet()).build()); // StarLink - use cached pool
 
     public LoginListener(MinecraftServer minecraftserver, NetworkManager networkmanager) {
         this.g = LoginListener.EnumProtocolState.HELLO;
@@ -187,7 +191,7 @@ public class LoginListener implements PacketLoginInListener {
             this.networkManager.sendPacketAsync(new PacketLoginOutEncryptionBegin("", this.server.getKeyPair().getPublic(), this.e)); // StarLink - optimize packet sending
         } else {
             // Spigot start
-            new Thread("User Authenticator #" + LoginListener.b.incrementAndGet()) {
+            authenticator.execute(new Runnable() { // StarLink - use cached pool
 
                 @Override
                 public void run() {
@@ -199,7 +203,7 @@ public class LoginListener implements PacketLoginInListener {
                         server.server.getLogger().log(java.util.logging.Level.WARNING, "Exception verifying " + i.getName(), ex);
                     }
                 }
-            }.start();
+            }); // StarLink
             // Spigot end
         }
 
@@ -216,7 +220,7 @@ public class LoginListener implements PacketLoginInListener {
             this.loginKey = packetlogininencryptionbegin.a(privatekey);
             this.g = LoginListener.EnumProtocolState.AUTHENTICATING;
             this.networkManager.a(this.loginKey);
-            Thread thread = new Thread("User Authenticator #" + LoginListener.b.incrementAndGet()) {
+            authenticator.execute(new Runnable() { // StarLink - use cached pool
                 public void run() {
                     GameProfile gameprofile = LoginListener.this.i;
 
@@ -263,10 +267,12 @@ public class LoginListener implements PacketLoginInListener {
 
                     return LoginListener.this.server.Y() && socketaddress instanceof InetSocketAddress ? ((InetSocketAddress) socketaddress).getAddress() : null;
                 }
-            };
+                // StarLink start
+            });
 
-            thread.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LoginListener.LOGGER));
-            thread.start();
+            // thread.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LoginListener.LOGGER)); // Already caught manually, see above
+            // thread.start();
+            // StarLink end
         }
     }
 

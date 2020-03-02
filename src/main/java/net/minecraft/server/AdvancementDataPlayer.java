@@ -48,12 +48,13 @@ public class AdvancementDataPlayer {
     @Nullable
     private Advancement k;
     private boolean l = true;
+    private boolean loaded; // StarLink - lazy loading
 
     public AdvancementDataPlayer(MinecraftServer minecraftserver, File file, EntityPlayer entityplayer) {
         this.d = minecraftserver;
         this.e = file;
         this.player = entityplayer;
-        this.g();
+        //this.g(); // StarLink
     }
 
     public void a(EntityPlayer entityplayer) {
@@ -61,6 +62,7 @@ public class AdvancementDataPlayer {
     }
 
     public void a() {
+	if (!loaded) this.g(); // StarLink
         Iterator iterator = CriterionTriggers.a().iterator();
 
         while (iterator.hasNext()) {
@@ -72,6 +74,7 @@ public class AdvancementDataPlayer {
     }
 
     public void b() {
+	if (!loaded) this.g(); // StarLink
         this.a();
         this.data.clear();
         this.g.clear();
@@ -83,6 +86,7 @@ public class AdvancementDataPlayer {
     }
 
     private void d() {
+	if (!loaded) this.g(); // StarLink
         Iterator iterator = this.d.getAdvancementData().getAdvancements().iterator();
 
         while (iterator.hasNext()) {
@@ -94,6 +98,7 @@ public class AdvancementDataPlayer {
     }
 
     private void e() {
+	if (!loaded) this.g(); // StarLink
         List<Advancement> list = Lists.newArrayList();
         Iterator iterator = this.data.entrySet().iterator();
 
@@ -117,6 +122,7 @@ public class AdvancementDataPlayer {
     }
 
     private void f() {
+	if (!loaded) this.g(); // StarLink
         Iterator iterator = this.d.getAdvancementData().getAdvancements().iterator();
 
         while (iterator.hasNext()) {
@@ -131,6 +137,7 @@ public class AdvancementDataPlayer {
     }
 
     private void g() {
+        loaded = true; // StarLink
         if (this.e.isFile()) {
             try {
                 JsonReader jsonreader = new JsonReader(new StringReader(Files.toString(this.e, StandardCharsets.UTF_8)));
@@ -200,6 +207,7 @@ public class AdvancementDataPlayer {
 
     public void c() {
         if (org.spigotmc.SpigotConfig.disableAdvancementSaving) return;
+	if (!loaded) this.g(); // StarLink
         Map<MinecraftKey, AdvancementProgress> map = Maps.newHashMap();
         Iterator iterator = this.data.entrySet().iterator();
 
@@ -271,6 +279,7 @@ public class AdvancementDataPlayer {
     }
 
     public boolean grantCriteria(Advancement advancement, String s) {
+	if (!loaded) this.g(); // StarLink
         boolean flag = false;
         AdvancementProgress advancementprogress = this.getProgress(advancement);
         boolean flag1 = advancementprogress.isDone();
@@ -296,6 +305,7 @@ public class AdvancementDataPlayer {
     }
 
     public boolean revokeCritera(Advancement advancement, String s) {
+	if (!loaded) this.g(); // StarLink
         boolean flag = false;
         AdvancementProgress advancementprogress = this.getProgress(advancement);
 
@@ -313,6 +323,7 @@ public class AdvancementDataPlayer {
     }
 
     private void c(Advancement advancement) {
+	if (!loaded) this.g(); // StarLink
         AdvancementProgress advancementprogress = this.getProgress(advancement);
 
         if (!advancementprogress.isDone()) {
@@ -339,6 +350,7 @@ public class AdvancementDataPlayer {
     }
 
     private void d(Advancement advancement) {
+	if (!loaded) this.g(); // StarLink
         AdvancementProgress advancementprogress = this.getProgress(advancement);
         Iterator iterator = advancement.getCriteria().entrySet().iterator();
 
@@ -362,6 +374,7 @@ public class AdvancementDataPlayer {
     }
 
     public void b(EntityPlayer entityplayer) {
+	if (!loaded) this.g(); // StarLink
         if (this.l || !this.h.isEmpty() || !this.i.isEmpty()) {
             Map<MinecraftKey, AdvancementProgress> map = Maps.newHashMap();
             Set<Advancement> set = Sets.newLinkedHashSet();
@@ -399,6 +412,7 @@ public class AdvancementDataPlayer {
     }
 
     public void a(@Nullable Advancement advancement) {
+	if (!loaded) this.g(); // StarLink
         Advancement advancement1 = this.k;
 
         if (advancement != null && advancement.b() == null && advancement.c() != null) {
@@ -414,6 +428,7 @@ public class AdvancementDataPlayer {
     }
 
     public AdvancementProgress getProgress(Advancement advancement) {
+	if (!loaded) this.g(); // StarLink
         AdvancementProgress advancementprogress = (AdvancementProgress) this.data.get(advancement);
 
         if (advancementprogress == null) {
@@ -425,11 +440,13 @@ public class AdvancementDataPlayer {
     }
 
     private void a(Advancement advancement, AdvancementProgress advancementprogress) {
+	if (!loaded) this.g(); // StarLink
         advancementprogress.a(advancement.getCriteria(), advancement.i());
         this.data.put(advancement, advancementprogress);
     }
 
     private void e(Advancement advancement) {
+	if (!loaded) this.g(); // StarLink
         boolean flag = this.f(advancement);
         boolean flag1 = this.g.contains(advancement);
 
@@ -459,6 +476,7 @@ public class AdvancementDataPlayer {
     }
 
     private boolean f(Advancement advancement) {
+	if (!loaded) this.g(); // StarLink
         for (int i = 0; advancement != null && i <= 2; ++i) {
             if (i == 0 && this.g(advancement)) {
                 return true;
@@ -485,6 +503,7 @@ public class AdvancementDataPlayer {
     }
 
     private boolean g(Advancement advancement) {
+	if (!loaded) this.g(); // StarLink
         AdvancementProgress advancementprogress = this.getProgress(advancement);
 
         if (advancementprogress.isDone()) {

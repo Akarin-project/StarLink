@@ -11,6 +11,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
+
+import cc.bukkit.starlink.PacketStream;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -269,7 +272,7 @@ public class CommandDispatcher {
             }
         }
         // CraftBukkit end
-        entityplayer.playerConnection.sendPacket(new PacketPlayOutCommands(rootcommandnode));
+        entityplayer.playerConnection.networkManager.stream().writeAndFlush(new PacketPlayOutCommands(rootcommandnode)); // StarLink
     }
 
     private void a(CommandNode<CommandListenerWrapper> commandnode, CommandNode<ICompletionProvider> commandnode1, CommandListenerWrapper commandlistenerwrapper, Map<CommandNode<CommandListenerWrapper>, CommandNode<ICompletionProvider>> map) {

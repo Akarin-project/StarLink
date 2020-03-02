@@ -7,6 +7,8 @@ import com.mojang.authlib.GameProfile;
 
 import cc.bukkit.starlink.PacketStream;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.EventLoopGroup;
+
 import java.io.File;
 import java.net.SocketAddress;
 import java.text.SimpleDateFormat;
@@ -148,12 +150,13 @@ public abstract class PlayerList {
         playerconnection.sendPacket(new PacketPlayOutLogin(entityplayer.getId(), entityplayer.playerInteractManager.getGameMode(), WorldData.c(worlddata.getSeed()), worlddata.isHardcore(), worldserver.worldProvider.getDimensionManager().getType(), this.getMaxPlayers(), worlddata.getType(), worldserver.spigotConfig.viewDistance, flag1, !flag));
         entityplayer.getBukkitEntity().sendSupportedChannels(); // CraftBukkit
         // StarLink start
-        playerconnection.networkManager.sendPackets(new PacketPlayOutCustomPayload(PacketPlayOutCustomPayload.a, (new PacketDataSerializer(Unpooled.buffer())).a(this.getServer().getServerModName())),
-        new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()),
-        new PacketPlayOutAbilities(entityplayer.abilities),
-        new PacketPlayOutHeldItemSlot(entityplayer.inventory.itemInHandIndex),
-        new PacketPlayOutRecipeUpdate(this.server.getCraftingManager().b()),
-        new PacketPlayOutTags(this.server.getTagRegistry()));
+        playerconnection.networkManager.stream()
+            .write(new PacketPlayOutCustomPayload(PacketPlayOutCustomPayload.a, (new PacketDataSerializer(Unpooled.buffer())).a(this.getServer().getServerModName())))
+            .write(new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()))
+            .write(new PacketPlayOutAbilities(entityplayer.abilities))
+            .write(new PacketPlayOutHeldItemSlot(entityplayer.inventory.itemInHandIndex))
+            .write(new PacketPlayOutRecipeUpdate(this.server.getCraftingManager().b()))
+            .writeAndFlush(new PacketPlayOutTags(this.server.getTagRegistry()));
         // StarLink end
         this.d(entityplayer);
         entityplayer.getStatisticManager().c();
@@ -397,6 +400,8 @@ public abstract class PlayerList {
         // CraftBukkit end
 
         this.savePlayerFile(entityplayer);
+        // StarLink start - remove bad magics, also duped with decouple
+        /*
         if (entityplayer.isPassenger()) {
             Entity entity = entityplayer.getRootVehicle();
 
@@ -415,6 +420,8 @@ public abstract class PlayerList {
                 worldserver.getChunkAt(entityplayer.chunkX, entityplayer.chunkZ).markDirty();
             }
         }
+        */
+        // StarLink end
 
         entityplayer.decouple();
         worldserver.removePlayer(entityplayer);
@@ -423,6 +430,9 @@ public abstract class PlayerList {
         this.playersByName.remove(entityplayer.getName().toLowerCase(java.util.Locale.ROOT)); // Spigot
         this.server.getBossBattleCustomData().b(entityplayer);
         UUID uuid = entityplayer.getUniqueID();
+        // StarLink start
+        this.j.remove(uuid);
+        /*
         EntityPlayer entityplayer1 = (EntityPlayer) this.j.get(uuid);
 
         if (entityplayer1 == entityplayer) {
@@ -432,6 +442,8 @@ public abstract class PlayerList {
             // this.p.remove(uuid);
             // CraftBukkit end
         }
+        */
+        // StarLink end
 
         // CraftBukkit start
         //  this.sendAll(new PacketPlayOutPlayerInfo(EnumPlayerInfoAction.REMOVE_PLAYER, new EntityPlayer[]{entityplayer}));
@@ -458,10 +470,12 @@ public abstract class PlayerList {
 
         // Moved from processLogin
         UUID uuid = EntityHuman.a(gameprofile);
-        List<EntityPlayer> list = Lists.newArrayList();
+        // List<EntityPlayer> list = Lists.newArrayList(); // StarLink
 
         EntityPlayer entityplayer;
 
+        // StarLink start
+        /*
         for (int i = 0; i < this.players.size(); ++i) {
             entityplayer = (EntityPlayer) this.players.get(i);
             if (entityplayer.getUniqueID().equals(uuid)) {
@@ -473,7 +487,11 @@ public abstract class PlayerList {
 
         while (iterator.hasNext()) {
             entityplayer = (EntityPlayer) iterator.next();
-            savePlayerFile(entityplayer); // CraftBukkit - Force the player's inventory to be saved
+            */
+        entityplayer = this.j.get(uuid);
+        if (entityplayer != null) {
+            // StarLink end
+            // savePlayerFile(entityplayer); // CraftBukkit - Force the player's inventory to be saved // StarLink - saved twice, see disconnect
             entityplayer.playerConnection.disconnect(new ChatMessage("multiplayer.disconnect.duplicate_login", new Object[0]));
         }
 
@@ -571,13 +589,13 @@ public abstract class PlayerList {
     }
 
     public EntityPlayer moveToWorld(EntityPlayer entityplayer, DimensionManager dimensionmanager, boolean flag, Location location, boolean avoidSuffocation) {
-        entityplayer.stopRiding(); // CraftBukkit
+        PacketStream stream = PacketStream.from(entityplayer).flows();
+	if (entityplayer.isPassenger()) entityplayer.stopRiding(); // CraftBukkit // StarLink - add filter
         //this.players.remove(entityplayer); // StarLink
         //this.playersByName.remove(entityplayer.getName().toLowerCase(java.util.Locale.ROOT)); // Spigot // StarLink
         entityplayer.getWorldServer().removePlayer(entityplayer);
         BlockPosition blockposition = entityplayer.getBed();
         boolean flag1 = entityplayer.isRespawnForced();
-        PacketStream stream = PacketStream.create(); // StarLink
 
         /* CraftBukkit start
         entityplayer.dimension = dimensionmanager;
@@ -671,7 +689,7 @@ public abstract class PlayerList {
 
         // StarLink start
         //stream.flow(new PacketPlayOutRespawn(worldserver.worldProvider.getDimensionManager().getType(),  WorldData.c(worldserver.getWorldData().getSeed()), worldserver.getWorldData().getType(), entityplayer1.playerInteractManager.getGameMode()));
-        stream.flow(new PacketPlayOutViewDistance(worldserver.spigotConfig.viewDistance)); // Spigot
+        stream.write(new PacketPlayOutViewDistance(worldserver.spigotConfig.viewDistance)); // Spigot
         // StarLink end
         entityplayer1.spawnIn(worldserver);
         entityplayer1.dead = false;
@@ -683,12 +701,12 @@ public abstract class PlayerList {
         // StarLink start
         entityplayer1.compassTarget = new Location(worldserver.getWorld(), blockposition1.getX(), blockposition1.getY(), blockposition1.getZ());
         stream
-            .flow(new PacketPlayOutSpawnPosition(blockposition1)) // Even this is unnecessary
-            .flow(new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()))
-            .flow(new PacketPlayOutExperience(entityplayer1.exp, entityplayer1.expTotal, entityplayer1.expLevel));
-        // StarLink end
+            //.flow(new PacketPlayOutSpawnPosition(blockposition1)) // Already did in update world data
+            .write(new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()));
+            //.flow(new PacketPlayOutExperience(entityplayer1.exp, entityplayer1.expTotal, entityplayer1.expLevel));
         this.a(entityplayer1, worldserver);
-        this.d(entityplayer1);
+        // this.d(entityplayer1);
+        // StarLink end
         if (!entityplayer.playerConnection.isDisconnected()) {
             worldserver.addPlayerRespawn(entityplayer1);
             //this.players.add(entityplayer1); // StarLink
@@ -696,19 +714,22 @@ public abstract class PlayerList {
             this.j.put(entityplayer1.getUniqueID(), entityplayer1);
         }
         // entityplayer1.syncInventory();
-        entityplayer1.setPlayerRealHealth(entityplayer1.getHealth()); // StarLink
+        // entityplayer1.setPlayerRealHealth(entityplayer1.getHealth()); // StarLink
         // Added from changeDimension
-        updateClientFlows(entityplayer, stream); // Update health, etc...
-        entityplayer.updateAbilitiesFlows(stream);
+        // this.updateClient(entityplayer); // Update health, etc... // StarLink
+        // entityplayer.updateAbilities(); // StarLink
+        // StarLink start
+        /*
         for (Object o1 : entityplayer.getEffects()) {
             MobEffect mobEffect = (MobEffect) o1;
-            stream.flow(new PacketPlayOutEntityEffect(entityplayer.getId(), mobEffect));
+            stream.write(new PacketPlayOutEntityEffect(entityplayer.getId(), mobEffect));
         }
+        */ // StarLink end
 
         // Fire advancement trigger
         entityplayer.triggerDimensionAdvancements(((CraftWorld) fromWorld).getHandle());
 
-        stream.send(entityplayer.playerConnection.networkManager); // StarLink - send before this event
+        stream.flush(); // StarLink - send before this event
         // Don't fire on respawn
         if (fromWorld != location.getWorld()) {
             PlayerChangedWorldEvent event = new PlayerChangedWorldEvent(entityplayer.getBukkitEntity(), fromWorld);
@@ -750,10 +771,20 @@ public abstract class PlayerList {
     }
 
     public void sendAll(Packet<?> packet) {
-        for (int i = 0; i < this.players.size(); ++i) {
-            ((EntityPlayer) this.players.get(i)).playerConnection.sendPacket(packet);
-        }
-
+	// StarLink start
+	EventLoopGroup eventLoop = this.server.getServerConnection().eventLoop;
+	if (eventLoop == null) {
+	    for (EntityPlayer player : this.players) {
+		player.playerConnection.networkManager.sendPacket(packet);
+	    }
+	} else {
+	    eventLoop.execute(() -> {
+		for (EntityPlayer player : this.players) {
+		    player.playerConnection.networkManager.sendPacketAsync(packet);
+		}
+	    });
+	}
+	// StarLink end
     }
 
     // CraftBukkit start - add a world/entity limited version
@@ -872,7 +903,7 @@ public abstract class PlayerList {
                 b0 = (byte) (24 + i);
             }
 
-            entityplayer.playerConnection.sendPacket(new PacketPlayOutEntityStatus(entityplayer, b0));
+            entityplayer.playerConnection.networkManager.stream().write(new PacketPlayOutEntityStatus(entityplayer, b0)); // StarLink
         }
 
         entityplayer.getBukkitEntity().recalculatePermissions(); // CraftBukkit
@@ -943,11 +974,11 @@ public abstract class PlayerList {
     public void a(EntityPlayer entityplayer, WorldServer worldserver) {
         WorldBorder worldborder = entityplayer.world.getWorldBorder(); // CraftBukkit
 
-        entityplayer.playerConnection.sendPacket(new PacketPlayOutWorldBorder(worldborder, PacketPlayOutWorldBorder.EnumWorldBorderAction.INITIALIZE));
-        entityplayer.playerConnection.sendPacket(new PacketPlayOutUpdateTime(worldserver.getTime(), worldserver.getDayTime(), worldserver.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)));
+        entityplayer.playerConnection.networkManager.stream().write(new PacketPlayOutWorldBorder(worldborder, PacketPlayOutWorldBorder.EnumWorldBorderAction.INITIALIZE)); // StarLink
+        entityplayer.playerConnection.networkManager.stream().write(new PacketPlayOutUpdateTime(worldserver.getTime(), worldserver.getDayTime(), worldserver.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE))); // StarLink
         BlockPosition blockposition = worldserver.getSpawn();
 
-        entityplayer.playerConnection.sendPacket(new PacketPlayOutSpawnPosition(blockposition));
+        entityplayer.playerConnection.networkManager.stream().writeAndFlush(new PacketPlayOutSpawnPosition(blockposition)); // StarLink
         if (worldserver.isRaining()) {
             // CraftBukkit start - handle player weather
             // entityplayer.playerConnection.sendPacket(new PacketPlayOutGameStateChange(1, 0.0F));
@@ -964,21 +995,12 @@ public abstract class PlayerList {
         entityplayer.updateInventory(entityplayer.defaultContainer);
         // entityplayer.triggerHealthUpdate();
         entityplayer.getBukkitEntity().updateScaledHealth(); // CraftBukkit - Update scaled health on respawn and worldchange
-        entityplayer.playerConnection.sendPacket(new PacketPlayOutHeldItemSlot(entityplayer.inventory.itemInHandIndex));
+        entityplayer.playerConnection.networkManager.stream().write(new PacketPlayOutHeldItemSlot(entityplayer.inventory.itemInHandIndex)); // StarLink
         // CraftBukkit start - from GameRules
         int i = entityplayer.world.getGameRules().getBoolean(GameRules.REDUCED_DEBUG_INFO) ? 22 : 23;
-        entityplayer.playerConnection.sendPacket(new PacketPlayOutEntityStatus(entityplayer, (byte) i));
+        entityplayer.playerConnection.networkManager.stream().writeAndFlush(new PacketPlayOutEntityStatus(entityplayer, (byte) i)); // StarLink
         // CraftBukkit end
     }
-    // StarLink start
-    public void updateClientFlows(EntityPlayer entityplayer, PacketStream stream) {
-        entityplayer.updateInventoryFlows(entityplayer.defaultContainer, stream);
-        entityplayer.getBukkitEntity().updateScaledHealthFlows(stream);
-        stream.flow(new PacketPlayOutHeldItemSlot(entityplayer.inventory.itemInHandIndex));
-        int i = entityplayer.world.getGameRules().getBoolean(GameRules.REDUCED_DEBUG_INFO) ? 22 : 23;
-        stream.flow(new PacketPlayOutEntityStatus(entityplayer, (byte) i));
-    }
-    // StarLink end
 
     public int getPlayerCount() {
         return this.players.size();

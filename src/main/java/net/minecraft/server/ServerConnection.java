@@ -39,6 +39,7 @@ public class ServerConnection {
     public volatile boolean c;
     private final List<ChannelFuture> listeningChannels = Collections.synchronizedList(Lists.newArrayList());
     private final List<NetworkManager> connectedChannels = Collections.synchronizedList(Lists.newArrayList());
+    public EventLoopGroup eventLoop; // StarLink
 
     public ServerConnection(MinecraftServer minecraftserver) {
         this.e = minecraftserver;
@@ -62,6 +63,7 @@ public class ServerConnection {
                 ServerConnection.LOGGER.info("Using default channel type");
             }
 
+            eventLoop = (EventLoopGroup) lazyinitvar.a(); // StarLink
             this.listeningChannels.add(((ServerBootstrap) ((ServerBootstrap) (new ServerBootstrap()).channel(oclass)).childHandler(new ChannelInitializer<Channel>() {
                 protected void initChannel(Channel channel) throws Exception {
                     try {
