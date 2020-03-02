@@ -2,11 +2,16 @@ package net.minecraft.server;
 
 import java.util.function.Predicate;
 
+import cc.bukkit.starlink.annotation.ObfuscateHelper;
+
 public class PathfinderGoalBreakDoor extends PathfinderGoalDoorInteract {
 
     private final Predicate<EnumDifficulty> g;
+    @ObfuscateHelper("timesFounded") // StarLink
     protected int a;
+    @ObfuscateHelper("doorBreakingProgress") // StarLink
     protected int b;
+    @ObfuscateHelper("maxTimesToApply") // StarLink
     protected int c;
 
     public PathfinderGoalBreakDoor(EntityInsentient entityinsentient, Predicate<EnumDifficulty> predicate) {
@@ -21,33 +26,39 @@ public class PathfinderGoalBreakDoor extends PathfinderGoalDoorInteract {
         this.c = i;
     }
 
+    @ObfuscateHelper("timesToApplyOnTarget") // StarLink
     protected int f() {
         return Math.max(240, this.c);
     }
 
     @Override
+    @ObfuscateHelper("canPathfind") // StarLink
     public boolean a() {
         return !super.a() ? false : (!this.entity.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING) ? false : this.a(this.entity.world.getDifficulty()) && !this.g());
     }
 
     @Override
+    @ObfuscateHelper("reset") // StarLink
     public void c() {
         super.c();
         this.a = 0;
     }
 
     @Override
+    @ObfuscateHelper("shouldContinue") // StarLink
     public boolean b() {
         return this.a <= this.f() && !this.g() && this.door.a((IPosition) this.entity.getPositionVector(), 2.0D) && this.a(this.entity.world.getDifficulty());
     }
 
     @Override
+    @ObfuscateHelper("abort") // StarLink
     public void d() {
         super.d();
         this.entity.world.a(this.entity.getId(), this.door, -1);
     }
 
     @Override
+    @ObfuscateHelper("onFoundTarget") // StarLink
     public void e() {
         super.e();
         if (this.entity.getRandom().nextInt(20) == 0) {
@@ -79,6 +90,7 @@ public class PathfinderGoalBreakDoor extends PathfinderGoalDoorInteract {
 
     }
 
+    @ObfuscateHelper("isHardEnough") // StarLink
     private boolean a(EnumDifficulty enumdifficulty) {
         return this.g.test(enumdifficulty);
     }

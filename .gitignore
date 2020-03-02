@@ -37,3 +37,5 @@ dependency-reduced-pom.xml
 
 /src/main/resources/achievement
 /src/main/resources/lang
+/.apt_generated/
+/.apt_generated_tests/

@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * but may not accord with any vested specification such as <i>MCP</i>.
  */
 @Documented
-@Target({ElementType.METHOD, ElementType.FIELD})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.PARAMETER})
 @Retention(RetentionPolicy.SOURCE)
 public @interface ObfuscateHelper {
   String value();

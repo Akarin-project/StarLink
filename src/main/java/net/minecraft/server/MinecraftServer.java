@@ -553,7 +553,7 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
 
     // CraftBukkit start
     public void loadSpawn(WorldLoadListener worldloadlistener, WorldServer worldserver) {
-        if (!worldserver.getWorld().getKeepSpawnInMemory()) {
+        if (true || !worldserver.getWorld().getKeepSpawnInMemory()) { // StarLink
             return;
         }
 
