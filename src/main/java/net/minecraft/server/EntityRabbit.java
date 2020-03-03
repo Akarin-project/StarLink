@@ -43,19 +43,15 @@ public class EntityRabbit extends EntityAnimal {
     @Override
     protected float dp() {
         if (!this.positionChanged && (!this.moveController.b() || this.moveController.e() <= this.locY() + 0.5D)) {
-            // StarLink start
-            synchronized (this.navigation) {
-                PathEntity pathentity = this.navigation.k();
+            PathEntity pathentity = this.navigation.k();
 
-                if (pathentity != null && pathentity.f() < pathentity.e()) {
-                    Vec3D vec3d = pathentity.a((Entity) this);
+            if (pathentity != null && pathentity.f() < pathentity.e()) {
+                Vec3D vec3d = pathentity.a((Entity) this);
 
-                    if (vec3d.y > this.locY() + 0.5D) {
-                        return 0.5F;
-                    }
+                if (vec3d.y > this.locY() + 0.5D) {
+                    return 0.5F;
                 }
-	    }
-            // StarLink end
+            }
 
             return this.moveController.c() <= 0.6D ? 0.2F : 0.3F;
         } else {

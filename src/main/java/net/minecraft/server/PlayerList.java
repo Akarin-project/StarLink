@@ -689,6 +689,7 @@ public abstract class PlayerList {
 
         // StarLink start
         stream.write(new PacketPlayOutRespawn(worldserver.worldProvider.getDimensionManager().getType(),  WorldData.c(worldserver.getWorldData().getSeed()), worldserver.getWorldData().getType(), entityplayer1.playerInteractManager.getGameMode()));
+        stream.flush().flows();
         stream.write(new PacketPlayOutViewDistance(worldserver.spigotConfig.viewDistance)); // Spigot
         // StarLink end
         entityplayer1.spawnIn(worldserver);
