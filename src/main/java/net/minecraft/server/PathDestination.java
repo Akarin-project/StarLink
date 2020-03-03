@@ -10,6 +10,7 @@ public class PathDestination extends PathPoint {
     private PathPoint n;
     @ObfuscateHelper("finished") // StarLink
     private boolean o;
+    @javax.annotation.Nullable protected BlockPosition position; // StarLink - add field
 
     public PathDestination(PathPoint pathpoint) {
         super(pathpoint.a, pathpoint.b, pathpoint.c);

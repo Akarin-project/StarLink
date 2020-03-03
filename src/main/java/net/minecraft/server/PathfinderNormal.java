@@ -86,9 +86,21 @@ public class PathfinderNormal extends PathfinderAbstract {
     }
 
     @Override
+    @ObfuscateHelper("createDestinationAt") // StarLink
     public PathDestination a(double d0, double d1, double d2) {
-        return new PathDestination(this.a(MathHelper.floor(d0), MathHelper.floor(d1), MathHelper.floor(d2)));
+	// StarLink start
+        PathDestination dest = new PathDestination(this.a(MathHelper.floor(d0), MathHelper.floor(d1), MathHelper.floor(d2)));
+        dest.position = new BlockPosition(d0, d1, d2);
+        return dest;
+        // StarLink end
     }
+    // StarLink start
+    public PathDestination createDestinationAt(BlockPosition position) {
+        PathDestination dest = new PathDestination(this.a(MathHelper.floor(position.getX()), MathHelper.floor(position.getY()), MathHelper.floor(position.getZ())));
+        dest.position = position;
+        return dest;
+    }
+    // StarLink end
 
     @Override
     @ObfuscateHelper("measureNodesAround") // StarLink

@@ -1,10 +1,12 @@
 package net.minecraft.server;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import cc.bukkit.starlink.annotation.ObfuscateHelper;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+
+import org.bukkit.entity.Fish;
 
 public class Pathfinder {
 
@@ -40,18 +44,22 @@ public class Pathfinder {
         this.e.a(chunkcache, entityinsentient);
         @ObfuscateHelper("entityNode") // StarLink
         PathPoint pathpoint = this.e.b();
+        // StarLink start
+        /*
         @ObfuscateHelper("destToPos") // StarLink
         Map<PathDestination, BlockPosition> map = set.stream().collect(Collectors.toMap((blockposition) -> { // StarLink - fixes warning
             return this.e.a((double) blockposition.getX(), (double) blockposition.getY(), (double) blockposition.getZ());
         }, Function.identity()));
-        PathEntity pathentity = this.a(pathpoint, map, f, i, f1);
+        */
+        PathEntity pathentity = this.a(pathpoint, Collections.emptyMap(), f, i, f1);
+        // StarLink end
 
         this.e.a();
         return pathentity;
     }
 
     @Nullable
-    @ObfuscateHelper("findPaths") // StarLink
+    @ObfuscateHelper("findPaths0") // StarLink
     private PathEntity a(PathPoint pathpoint, Map<PathDestination, BlockPosition> map, float f, @ObfuscateHelper("maxAcceptedDistanceAsFinished") int i, float f1) {
 	@ObfuscateHelper("destinations") // StarLink
         Set<PathDestination> set = map.keySet();
@@ -75,12 +83,24 @@ public class Pathfinder {
             PathPoint pathpoint1 = this.a.c();
 
             pathpoint1.i = true;
+            // StarLink start - simplify loop
+            boolean finishedAny = false;
+            for (PathDestination dest : set) {
+        	if (pathpoint1.c((PathPoint) dest) <= (float) i) {
+        	    finishedAny = true;
+        	    dest.e();
+        	}
+            }
+            if (finishedAny) break;
+            /*
             set.stream().filter((pathdestination) -> {
                 return pathpoint1.c((PathPoint) pathdestination) <= (float) i;
             }).forEach(PathDestination::e);
             if (set.stream().anyMatch(PathDestination::f)) {
                 break;
             }
+            */
+            // StarLink end
 
             if (pathpoint1.a(pathpoint) < f) {
         	@ObfuscateHelper("aroundNodesAmount") // StarLink
@@ -109,8 +129,26 @@ public class Pathfinder {
             }
         }
 
-        Stream stream;
+        // StarLink start - simplify loop
+        // Stream stream;
 
+        boolean finishedAny = false;
+        PathEntity nearest = null; // This was considered as an alternative when none finished
+        PathEntity shortest = null;
+        
+        for (PathDestination dest : set) {
+            boolean fin = dest.f();
+            PathEntity each = a(dest.d(), map.isEmpty() || dest.position == null ? (BlockPosition) map.get(dest) : dest.position, fin);
+            
+    	    if (shortest == null || each.e() < shortest.e())
+    		shortest = each;
+            
+            if (fin)
+        	finishedAny = true;
+            else if (!finishedAny && (nearest == null || each.l() < nearest.l()))
+                nearest = each;
+        }
+        /*
         if (set.stream().anyMatch(PathDestination::f)) {
             stream = set.stream().filter(PathDestination::f).map((pathdestination) -> {
                 return this.a(pathdestination.d(), (BlockPosition) map.get(pathdestination), true);
@@ -120,7 +158,10 @@ public class Pathfinder {
                 return this.a(pathdestination.d(), (BlockPosition) map.get(pathdestination), false);
             }).sorted(Comparator.comparingDouble(PathEntity::l).thenComparingInt(PathEntity::e));
         }
+        */
+        return finishedAny ? shortest : (shortest.e() < nearest.e() ? shortest : nearest);
 
+        /*
         Optional<PathEntity> optional = stream.findFirst();
 
         if (!optional.isPresent()) {
@@ -130,6 +171,8 @@ public class Pathfinder {
 
             return pathentity;
         }
+        */
+        // StarLink end
     }
 
     @ObfuscateHelper("getNearestDistance") // StarLink
@@ -150,7 +193,7 @@ public class Pathfinder {
         return f;
     }
 
-    @ObfuscateHelper("getAssociatedNodes") // StarLink
+    @ObfuscateHelper("gatherAssociatedNodes") // StarLink
     private PathEntity a(PathPoint pathpoint, BlockPosition blockposition, boolean flag) {
         List<PathPoint> list = Lists.newArrayList();
         @ObfuscateHelper("next") // StarLink

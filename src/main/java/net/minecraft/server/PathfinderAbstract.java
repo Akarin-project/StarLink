@@ -49,6 +49,7 @@ public abstract class PathfinderAbstract {
     @ObfuscateHelper("getNodeByEntity") // StarLink
     public abstract PathPoint b();
 
+    @ObfuscateHelper("createDestinationFrom") // StarLink
     public abstract PathDestination a(double d0, double d1, double d2);
 
     @ObfuscateHelper("measureNodesAround") // StarLink
