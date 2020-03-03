@@ -658,7 +658,7 @@ public abstract class EntityInsentient extends EntityLiving {
         this.goalSelector.doTick();
         this.world.getMethodProfiler().exit();
         this.world.getMethodProfiler().enter("navigation");
-        this.navigation.c();
+        this.navigation.tickAsync(); // StarLink
         this.world.getMethodProfiler().exit();
         this.world.getMethodProfiler().enter("mob tick");
         this.mobTick();

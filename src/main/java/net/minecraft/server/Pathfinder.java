@@ -39,20 +39,16 @@ public class Pathfinder {
 
     @Nullable
     @ObfuscateHelper("findPaths") // StarLink
-    public PathEntity a(ChunkCache chunkcache, EntityInsentient entityinsentient, Set<BlockPosition> set, float f, int i, float f1) {
+    public synchronized PathEntity a(ChunkCache chunkcache, EntityInsentient entityinsentient, Set<BlockPosition> set, float f, int i, float f1) { // StarLink
         this.a.a();
         this.e.a(chunkcache, entityinsentient);
         @ObfuscateHelper("entityNode") // StarLink
         PathPoint pathpoint = this.e.b();
-        // StarLink start
-        /*
         @ObfuscateHelper("destToPos") // StarLink
         Map<PathDestination, BlockPosition> map = set.stream().collect(Collectors.toMap((blockposition) -> { // StarLink - fixes warning
             return this.e.a((double) blockposition.getX(), (double) blockposition.getY(), (double) blockposition.getZ());
         }, Function.identity()));
-        */
-        PathEntity pathentity = this.a(pathpoint, Collections.emptyMap(), f, i, f1);
-        // StarLink end
+        PathEntity pathentity = this.a(pathpoint, map, f, i, f1);
 
         this.e.a();
         return pathentity;
@@ -159,7 +155,7 @@ public class Pathfinder {
             }).sorted(Comparator.comparingDouble(PathEntity::l).thenComparingInt(PathEntity::e));
         }
         */
-        return finishedAny ? shortest : (shortest.e() < nearest.e() ? shortest : nearest);
+        return finishedAny ? shortest : (shortest == null ? nearest : (nearest == null ? null : (shortest.e() < nearest.e() ? shortest : nearest)));
 
         /*
         Optional<PathEntity> optional = stream.findFirst();
@@ -194,7 +190,7 @@ public class Pathfinder {
     }
 
     @ObfuscateHelper("gatherAssociatedNodes") // StarLink
-    private PathEntity a(PathPoint pathpoint, BlockPosition blockposition, boolean flag) {
+    private PathEntity a(PathPoint pathpoint, BlockPosition blockposition, boolean flag) { // StarLink - static
         List<PathPoint> list = Lists.newArrayList();
         @ObfuscateHelper("next") // StarLink
         PathPoint pathpoint1 = pathpoint;

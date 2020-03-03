@@ -442,7 +442,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
         } else {
             CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> completablefuture = playerchunk.a(chunkstatus.e(), this);
 
-            return completablefuture.thenComposeAsync((either) -> {
+            return completablefuture.<Either<IChunkAccess, PlayerChunk.Failure>>thenComposeAsync((either) -> {
                 Optional<IChunkAccess> optional = either.left();
 
                 if (!optional.isPresent()) {

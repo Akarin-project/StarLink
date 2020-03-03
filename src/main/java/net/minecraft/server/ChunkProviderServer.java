@@ -143,7 +143,7 @@ public class ChunkProviderServer extends IChunkProvider {
             if (playerchunk == null) {
                 return null;
             } else {
-                Either<IChunkAccess, PlayerChunk.Failure> either = (Either) playerchunk.b(ChunkStatus.FULL).getNow(null); // CraftBukkit - decompile error
+                Either<IChunkAccess, PlayerChunk.Failure> either = playerchunk.b(ChunkStatus.FULL).getNow(null); // CraftBukkit - decompile error
 
                 if (either == null) {
                     return null;

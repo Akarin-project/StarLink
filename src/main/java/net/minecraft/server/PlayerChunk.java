@@ -65,7 +65,7 @@ public class PlayerChunk {
     // CraftBukkit end
 
     public CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> getStatusFutureUnchecked(ChunkStatus chunkstatus) {
-        CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> completablefuture = (CompletableFuture) this.statusFutures.get(chunkstatus.c());
+        CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> completablefuture = this.statusFutures.get(chunkstatus.c());
 
         return completablefuture == null ? PlayerChunk.UNLOADED_CHUNK_ACCESS_FUTURE : completablefuture;
     }

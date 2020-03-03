@@ -1,7 +1,14 @@
 package net.minecraft.server;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import cc.bukkit.starlink.annotation.ObfuscateHelper;
+
+import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -22,13 +29,17 @@ public abstract class NavigationAbstract {
     protected long j;
     protected double k;
     protected float l;
+    @ObfuscateHelper("needPathfind") // StarLink
     protected boolean m;
     protected long n;
     protected PathfinderAbstract o;
+    @ObfuscateHelper("origin") // StarLink
     private BlockPosition q;
     private int r;
     private float s;
     private final Pathfinder t;
+    private long lastPathfindAsync; // StarLink
+    private static final ExecutorService pathfindExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("StarLink Pathfinder - %d").build()); // StarLink
 
     public NavigationAbstract(EntityInsentient entityinsentient, World world) {
         this.g = Vec3D.a;
@@ -65,6 +76,7 @@ public abstract class NavigationAbstract {
         return this.m;
     }
 
+    @ObfuscateHelper("doPathfind") // StarLink
     public void j() {
         if (this.b.getTime() - this.n > 20L) {
             if (this.q != null) {
@@ -78,6 +90,37 @@ public abstract class NavigationAbstract {
         }
 
     }
+    // StarLink start
+    public void doPathfindAsync() {
+        if (this.b.getTime() - this.lastPathfindAsync > 20L) {
+            if (this.q != null) {
+        	this.lastPathfindAsync = this.b.getTime();
+        	
+                float f = (float) this.p.getValue();
+                BlockPosition blockposition = new BlockPosition(this.a);
+                int k = (int) (f + (float) 8);
+                ChunkCache cache = new ChunkCache(this.b, blockposition.b(-k, -k, -k), blockposition.b(k, k, k));
+                
+                if (this.c != null && !this.c.b()) {
+                    doTickAsync(this.c);
+                    return;
+                }
+                
+                pathfindExecutor.execute(() -> {
+                    PathEntity result = findPathAsync(cache, Collections.singleton(this.q), this.r);
+                    NavigationAbstract.this.b.getMinecraftServer().processQueue.add(() -> {
+                        if (result != null && result.k() != null)
+                            this.q = result.k();
+                        
+                        NavigationAbstract.this.c = result;
+                    });
+                });
+            }
+        } else {
+            doTickAsync(this.c);
+        }
+    }
+    // StarLink end
 
     @Nullable
     public final PathEntity a(double d0, double d1, double d2, int i) {
@@ -100,7 +143,8 @@ public abstract class NavigationAbstract {
     }
 
     @Nullable
-    protected PathEntity a(Set<BlockPosition> set, int i, boolean flag, int j) {
+    @ObfuscateHelper("findPath") // StarLink
+    protected PathEntity a(@ObfuscateHelper("allowedOrigins") Set<BlockPosition> set, int i, boolean flag, int j) { // StarLink
         if (set.isEmpty()) {
             return null;
         } else if (this.a.locY() < 0.0D) {
@@ -126,6 +170,17 @@ public abstract class NavigationAbstract {
             return pathentity;
         }
     }
+    // StarLink start
+    protected PathEntity findPathAsync(ChunkCache cache, Set<BlockPosition> set, int j) {
+        if (this.a.locY() < 0.0D) {
+            return null;
+        } else if (!this.a()) {
+            return null;
+        } else {
+            return this.t.a(cache, this.a, set, f, j, this.s);
+        }
+    }
+    // StarLink end
 
     public boolean a(double d0, double d1, double d2, double d3) {
         return this.a(this.a(d0, d1, d2, 1), d3);
@@ -169,6 +224,7 @@ public abstract class NavigationAbstract {
         return this.c;
     }
 
+    @ObfuscateHelper("doTick") // StarLink
     public void c() {
         ++this.e;
         if (this.m) {
@@ -198,6 +254,84 @@ public abstract class NavigationAbstract {
             }
         }
     }
+    // StarLink start
+    public void tickAsync() {
+	++this.e;
+	this.doPathfindAsync();
+    }
+    
+    public void doTickAsync(PathEntity pathEntity) {
+	if (shouldContinuePathfind(pathEntity)) return;
+	
+	Vec3D vec3d;
+
+        if (this.a()) {
+            applyUnitAsync(pathEntity);
+        } else if (pathEntity.f() < pathEntity.e()) {
+            vec3d = this.b();
+            Vec3D vec3d1 = pathEntity.a(this.a, pathEntity.f());
+
+            if (vec3d.y > vec3d1.y && !this.a.onGround && MathHelper.floor(vec3d.x) == MathHelper.floor(vec3d1.x) && MathHelper.floor(vec3d.z) == MathHelper.floor(vec3d1.z)) {
+        	pathEntity.c(pathEntity.f() + 1);
+            }
+        }
+
+        // PacketDebug.a(this.b, this.a, pathEntity, this.l);
+        if (shouldContinuePathfind(pathEntity)) return;
+        
+        vec3d = pathEntity.a((Entity) this.a);
+        BlockPosition blockposition = new BlockPosition(vec3d);
+
+        this.a.getControllerMove().a(vec3d.x, this.b.getType(blockposition.down()).isAir() ? vec3d.y : PathfinderNormal.a((IBlockAccess) this.b, blockposition), vec3d.z, this.d);
+    }
+    
+    protected void applyUnitAsync(PathEntity pathEntity) {
+        Vec3D vec3d = this.b();
+
+        this.l = this.a.getWidth() > 0.75F ? this.a.getWidth() / 2.0F : 0.75F - this.a.getWidth() / 2.0F;
+        Vec3D vec3d1 = pathEntity.g();
+
+        if (Math.abs(this.a.locX() - (vec3d1.x + 0.5D)) < (double) this.l && Math.abs(this.a.locZ() - (vec3d1.z + 0.5D)) < (double) this.l && Math.abs(this.a.locY() - vec3d1.y) < 1.0D) {
+            pathEntity.c(pathEntity.f() + 1);
+        }
+
+        this.setUnitAsync(pathEntity, vec3d);
+    }
+
+    protected void setUnitAsync(PathEntity pathEntity, Vec3D vec3d) {
+        if (this.e - this.f > 100) {
+            if (vec3d.distanceSquared(this.g) < 2.25D) {
+                this.o();
+            }
+
+            this.f = this.e;
+            this.g = vec3d;
+        }
+
+        if (!pathEntity.b()) {
+            Vec3D vec3d1 = pathEntity.g();
+
+            if (vec3d1.equals(this.h)) {
+                this.i += SystemUtils.getMonotonicMillis() - this.j;
+            } else {
+                this.h = vec3d1;
+                double d0 = vec3d.f(this.h);
+
+                this.k = this.a.dt() > 0.0F ? d0 / (double) this.a.dt() * 1000.0D : 0.0D;
+            }
+
+            if (this.k > 0.0D && (double) this.i > this.k * 3.0D) {
+                this.h = Vec3D.a;
+                this.i = 0L;
+                this.k = 0.0D;
+                this.o();
+            }
+
+            this.j = SystemUtils.getMonotonicMillis();
+        }
+
+    }
+    // StarLink end
 
     protected void l() {
         Vec3D vec3d = this.b();
@@ -246,9 +380,15 @@ public abstract class NavigationAbstract {
 
     }
 
+    @ObfuscateHelper("shouldContinuePathfind") // StarLink
     public boolean m() {
         return this.c == null || this.c.b();
     }
+    // StarLink start
+    public boolean shouldContinuePathfind(PathEntity pathEntity) {
+        return pathEntity == null || pathEntity.b();
+    }
+    // StarLink end
 
     public boolean n() {
         return !this.m();
@@ -258,8 +398,10 @@ public abstract class NavigationAbstract {
         this.c = null;
     }
 
+    @ObfuscateHelper("getEntityPathfindUnit") // StarLink
     protected abstract Vec3D b();
 
+    @ObfuscateHelper("canPathfind") // StarLink
     protected abstract boolean a();
 
     protected boolean p() {

@@ -133,6 +133,7 @@ public class PathEntity {
         return "Path(length=" + this.a.size() + ")";
     }
 
+    @ObfuscateHelper("origin") // StarLink
     public BlockPosition k() {
         return this.f;
     }
