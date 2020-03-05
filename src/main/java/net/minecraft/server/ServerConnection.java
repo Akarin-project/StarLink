@@ -10,10 +10,12 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.ServerSocketChannel;
+import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.concurrent.Future;
@@ -68,8 +70,9 @@ public class ServerConnection {
                 protected void initChannel(Channel channel) throws Exception {
                     try {
                         channel.config().setOption(ChannelOption.TCP_NODELAY, true);
+                        channel.config().setOption(EpollChannelOption.TCP_QUICKACK, true); // StarLink
                     } catch (ChannelException channelexception) {
-                        ;
+                	;
                     }
 
                     channel.pipeline().addLast("timeout", new ReadTimeoutHandler(30)).addLast("legacy_query", new LegacyPingHandler(ServerConnection.this)).addLast("splitter", new PacketSplitter()).addLast("decoder", new PacketDecoder(EnumProtocolDirection.SERVERBOUND)).addLast("prepender", new PacketPrepender()).addLast("encoder", new PacketEncoder(EnumProtocolDirection.CLIENTBOUND));
