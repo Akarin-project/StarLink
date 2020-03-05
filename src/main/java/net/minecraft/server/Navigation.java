@@ -183,7 +183,7 @@ public class Navigation extends NavigationAbstract {
                     double d3 = (double) j2 + 0.5D - vec3d.z;
 
                     if (d2 * d0 + d3 * d1 >= 0.0D) {
-                        PathType pathtype = this.o.a(this.b, i2, j - 1, j2, this.a, l, i1, j1, true, true);
+                	PathType pathtype = this.o.a(this.o.a, i2, j - 1, j2, this.a, l, i1, j1, true, true); // StarLink - use chunk cache
 
                         if (pathtype == PathType.WATER) {
                             return false;
