@@ -221,7 +221,7 @@ public class BossBattleCustom extends BossBattleServer {
     }
 
     public void c(EntityPlayer entityplayer) {
-        if (this.i.contains(entityplayer.getUniqueID())) {
+        if (!this.i.contains(entityplayer.getUniqueID())) { // StarLink - fixes wrong filter
             this.addPlayer(entityplayer);
         }
 

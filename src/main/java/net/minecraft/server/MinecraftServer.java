@@ -2084,7 +2084,7 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
         return super.isMainThread() || this.isStopped(); // CraftBukkit - MC-142590
     }
 
-    @Deprecated
+    // @Deprecated // StarLink
     public static MinecraftServer getServer() {
         return (Bukkit.getServer() instanceof CraftServer) ? ((CraftServer) Bukkit.getServer()).getServer() : null;
     }

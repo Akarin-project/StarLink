@@ -5,9 +5,13 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.util.Either;
+
+import cc.bukkit.starlink.annotation.ObfuscateHelper;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
@@ -21,6 +25,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +36,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -107,7 +114,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
         this.unloadQueue = new LongOpenHashSet();
         this.u = new AtomicInteger();
         this.playerMap = new PlayerMap();
-        this.trackedEntities = new Int2ObjectOpenHashMap();
+        this.trackedEntities = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>()); // StarLink
         this.z = Queues.newConcurrentLinkedQueue();
         this.definedStructureManager = definedstructuremanager;
         this.w = worldserver.getWorldProvider().getDimensionManager().a(file);
@@ -141,6 +148,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
         return d2 * d2 + d3 * d3;
     }
 
+    @ObfuscateHelper("getCoordWithHighestOffset") // StarLink
     private static int b(ChunkCoordIntPair chunkcoordintpair, EntityPlayer entityplayer, boolean flag) {
         int i;
         int j;
@@ -158,6 +166,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
         return a(chunkcoordintpair, i, j);
     }
 
+    @ObfuscateHelper("getCoordWithHighestOffset") // StarLink
     private static int a(ChunkCoordIntPair chunkcoordintpair, int i, int j) {
         int k = chunkcoordintpair.x - i;
         int l = chunkcoordintpair.z - j;
@@ -519,7 +528,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
             return "chunkGenerate " + chunkstatus.d();
         });
         return completablefuture.thenComposeAsync((either) -> {
-            return (CompletableFuture) either.map((list) -> {
+            return either.map((list) -> {
                 try {
                     CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> completablefuture1 = chunkstatus.a(this.world, this.chunkGenerator, this.definedStructureManager, this.lightEngine, (ichunkaccess) -> {
                         return this.c(playerchunk);
@@ -728,6 +737,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
         int j = MathHelper.clamp(i + 1, 3, 33);
 
         if (j != this.viewDistance) {
+            @ObfuscateHelper("previousViewDistance") // StarLink
             int k = this.viewDistance;
 
             this.viewDistance = j;
@@ -740,8 +750,11 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
                 Packet<?>[] apacket = new Packet[2];
 
                 this.a(chunkcoordintpair, false).forEach((entityplayer) -> {
+                    @ObfuscateHelper("highestOffset") // StarLink
                     int l = b(chunkcoordintpair, entityplayer, true);
+                    @ObfuscateHelper("isInsideViewDistanceBefore") // StarLink
                     boolean flag = l <= k;
+                    @ObfuscateHelper("isInsideViewDistanceAfter") // StarLink
                     boolean flag1 = l <= this.viewDistance;
 
                     this.sendChunk(entityplayer, chunkcoordintpair, apacket, flag, flag1);
@@ -751,17 +764,21 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
 
     }
 
-    protected void sendChunk(EntityPlayer entityplayer, ChunkCoordIntPair chunkcoordintpair, Packet<?>[] apacket, boolean flag, boolean flag1) {
+    protected void sendChunk(EntityPlayer entityplayer, ChunkCoordIntPair chunkcoordintpair, Packet<?>[] apacket, @ObfuscateHelper("shouldUnload") boolean flag, @ObfuscateHelper("shouldLoad") boolean flag1) { // StarLink
         if (entityplayer.world == this.world) {
             if (flag1 && !flag) {
                 PlayerChunk playerchunk = this.getVisibleChunk(chunkcoordintpair.pair());
 
                 if (playerchunk != null) {
-                    Chunk chunk = playerchunk.getChunk();
+                    // StarLink start
+                    this.executor.execute(() -> {
+                        Chunk chunk = playerchunk.getChunk();
 
-                    if (chunk != null) {
-                        this.a(entityplayer, apacket, chunk);
-                    }
+                        if (chunk != null) {
+                            MinecraftServer.getServer().processQueue.add(() -> this.a(entityplayer, apacket, chunk));
+                        }
+                    });
+                    // StarLink end
 
                     PacketDebug.a(this.world, chunkcoordintpair);
                 }
@@ -987,7 +1004,8 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
     }
 
     @Override
-    public Stream<EntityPlayer> a(ChunkCoordIntPair chunkcoordintpair, boolean flag) {
+    @ObfuscateHelper("isInsideViewDistance") // StarLink
+    public Stream<EntityPlayer> a(ChunkCoordIntPair chunkcoordintpair, @ObfuscateHelper("allowEdges") boolean flag) { // StarLink
         return this.playerMap.a(chunkcoordintpair.pair()).filter((entityplayer) -> {
             int i = b(chunkcoordintpair, entityplayer, true);
 
@@ -1107,6 +1125,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
 
     }
 
+    @ObfuscateHelper("sendNewChunk") // StarLink
     private void a(EntityPlayer entityplayer, Packet<?>[] apacket, Chunk chunk) {
         if (apacket[0] == null) {
             apacket[0] = new PacketPlayOutMapChunk(chunk, 65535);
@@ -1129,7 +1148,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
                     list.add(entity);
                 }
 
-                if (!entity.getPassengers().isEmpty()) {
+                if (!entity.passengers.isEmpty()) { // StarLink - do not use copier
                     list1.add(entity);
                 }
             }
@@ -1230,7 +1249,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
         }
 
         public void updatePlayer(EntityPlayer entityplayer) {
-            org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot
+            org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot // StarLink
             if (entityplayer != this.tracker) {
                 Vec3D vec3d = entityplayer.getPositionVector().d(this.tracker.getPositionVector()); // MC-155077, SPIGOT-5113
                 int i = Math.min(this.b(), (PlayerChunkMap.this.viewDistance - 1) * 16);

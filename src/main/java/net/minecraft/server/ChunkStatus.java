@@ -3,6 +3,8 @@ package net.minecraft.server;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.util.Either;
+
+import cc.bukkit.starlink.annotation.ObfuscateHelper;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.Collections;
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+
+import org.bukkit.Bukkit;
 
 public class ChunkStatus {
 
@@ -84,6 +88,8 @@ public class ChunkStatus {
         return (CompletableFuture) function.apply(ichunkaccess);
     });
     private static final List<ChunkStatus> q = ImmutableList.of(ChunkStatus.FULL, ChunkStatus.FEATURES, ChunkStatus.LIQUID_CARVERS, ChunkStatus.STRUCTURE_STARTS, ChunkStatus.STRUCTURE_STARTS, ChunkStatus.STRUCTURE_STARTS, ChunkStatus.STRUCTURE_STARTS, ChunkStatus.STRUCTURE_STARTS, ChunkStatus.STRUCTURE_STARTS, ChunkStatus.STRUCTURE_STARTS, ChunkStatus.STRUCTURE_STARTS);
+    private static final List<ChunkStatus> SORTED_STATUS = ImmutableList.of(ChunkStatus.EMPTY, ChunkStatus.STRUCTURE_STARTS, ChunkStatus.STRUCTURE_REFERENCES, ChunkStatus.BIOMES, ChunkStatus.NOISE, ChunkStatus.SURFACE, ChunkStatus.CARVERS, ChunkStatus.LIQUID_CARVERS, ChunkStatus.FEATURES, ChunkStatus.LIGHT, ChunkStatus.SPAWN, ChunkStatus.HEIGHTMAPS, ChunkStatus.FULL); // StarLink
+    @ObfuscateHelper("statusIdAsIndexToDependIds") // StarLink
     private static final IntList r = SystemUtils.a(new IntArrayList(a().size()), (IntArrayList intarraylist) -> { // StarLink - fix compile errors
         int i = 0;
 
@@ -97,7 +103,9 @@ public class ChunkStatus {
 
     });
     private final String s;
+    @ObfuscateHelper("id") // StarLink
     private final int t;
+    @ObfuscateHelper("dependStatus") // StarLink
     private final ChunkStatus u;
     private final ChunkStatus.b v;
     private final ChunkStatus.c w;
@@ -127,7 +135,10 @@ public class ChunkStatus {
         return (ChunkStatus) IRegistry.a((IRegistry) IRegistry.CHUNK_STATUS, s, (Object) (new ChunkStatus(s, chunkstatus, i, enumset, chunkstatus_type, chunkstatus_b, chunkstatus_c)));
     }
 
+    @ObfuscateHelper("sortLevelsHigherWithoutDuplication") // StarLink
     public static List<ChunkStatus> a() {
+	// StarLink start
+	/*
         List<ChunkStatus> list = Lists.newArrayList();
 
         ChunkStatus chunkstatus;
@@ -139,6 +150,9 @@ public class ChunkStatus {
         list.add(chunkstatus);
         Collections.reverse(list);
         return list;
+        */
+	return SORTED_STATUS;
+	// StarLink
     }
 
     private static boolean a(ChunkStatus chunkstatus, IChunkAccess ichunkaccess) {
@@ -146,18 +160,19 @@ public class ChunkStatus {
     }
 
     public static ChunkStatus a(int i) {
-        return i >= ChunkStatus.q.size() ? ChunkStatus.EMPTY : (i < 0 ? ChunkStatus.FULL : (ChunkStatus) ChunkStatus.q.get(i));
+        return i >= 11/*ChunkStatus.q.size()*/ ? ChunkStatus.EMPTY : (i <= 0 ? ChunkStatus.FULL : (i == 1 ? ChunkStatus.FEATURES : (i == 2 ? ChunkStatus.LIQUID_CARVERS : ChunkStatus.STRUCTURE_STARTS))); // StarLink
     }
 
     public static int b() {
-        return ChunkStatus.q.size();
+        return 11;//ChunkStatus.q.size(); // StarLink
     }
 
     public static int a(ChunkStatus chunkstatus) {
-        return ChunkStatus.r.getInt(chunkstatus.c());
+	int id = chunkstatus.c();
+        return id >= 9 ? 0 : (id <= 1 ? 10 : (id == 8 ? 1 : 2));//ChunkStatus.r.getInt(chunkstatus.c()); // StarLink
     }
 
-    ChunkStatus(String s, @Nullable ChunkStatus chunkstatus, int i, EnumSet<HeightMap.Type> enumset, ChunkStatus.Type chunkstatus_type, ChunkStatus.b chunkstatus_b, ChunkStatus.c chunkstatus_c) {
+    ChunkStatus(String s, @Nullable @ObfuscateHelper("dependOn") ChunkStatus chunkstatus, int i, EnumSet<HeightMap.Type> enumset, ChunkStatus.Type chunkstatus_type, ChunkStatus.b chunkstatus_b, ChunkStatus.c chunkstatus_c) { // StarLink
         this.s = s;
         this.u = chunkstatus == null ? this : chunkstatus;
         this.v = chunkstatus_b;
@@ -168,6 +183,7 @@ public class ChunkStatus {
         this.t = chunkstatus == null ? 0 : chunkstatus.c() + 1;
     }
 
+    @ObfuscateHelper("statusId") // StarLink
     public int c() {
         return this.t;
     }
@@ -176,6 +192,7 @@ public class ChunkStatus {
         return this.s;
     }
 
+    @ObfuscateHelper("depend") // StarLink
     public ChunkStatus e() {
         return this.u;
     }
@@ -204,6 +221,7 @@ public class ChunkStatus {
         return this.z;
     }
 
+    @ObfuscateHelper("higherThan") // StarLink
     public boolean b(ChunkStatus chunkstatus) {
         return this.c() >= chunkstatus.c();
     }
