@@ -114,7 +114,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
         this.unloadQueue = new LongOpenHashSet();
         this.u = new AtomicInteger();
         this.playerMap = new PlayerMap();
-        this.trackedEntities = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>()); // StarLink
+        this.trackedEntities = new Int2ObjectOpenHashMap<>();
         this.z = Queues.newConcurrentLinkedQueue();
         this.definedStructureManager = definedstructuremanager;
         this.w = worldserver.getWorldProvider().getDimensionManager().a(file);
