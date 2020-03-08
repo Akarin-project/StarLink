@@ -157,6 +157,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
     }
 
     public void sendPacket(Packet<?> packet, @Nullable GenericFutureListener<? extends Future<? super Void>> genericfuturelistener) {
+	if (!channel.isRegistered()) return; // StarLink
         if (this.isConnected()) {
             if (!handled) { this.o(); handled = true; } // StarLink - free packet queue
             this.b(packet, genericfuturelistener);
@@ -207,6 +208,9 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
     }
     // StarLink start - multiple packets, copied from above
     public void sendPacketAsync(Packet<?> packet) {
+	if (!channel.isRegistered())
+	    return;
+	
 	if (!isConnected()) {
 	    packetQueue.add(new NetworkManager.QueuedPacket(packet, null));
 	    return;
@@ -227,6 +231,15 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
     }
     
     public void sendPackets(Object[] objects) {
+	if (!channel.isRegistered())
+	    return;
+	
+	if (!isConnected()) {
+	    for (Object e : objects)
+                packetQueue.add(new NetworkManager.QueuedPacket((Packet<?>) e, null));
+	    return;
+	}
+	
         this.channel.eventLoop().execute(() -> {
             for (Object e : objects) {
         	Packet<?> packet = (Packet<?>) e;

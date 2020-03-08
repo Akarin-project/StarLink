@@ -6,6 +6,8 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.shorts.ShortList;
 import it.unimi.dsi.fastutil.shorts.ShortListIterator;
+
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -27,6 +29,7 @@ public class Chunk implements IChunkAccess {
     private static final Logger LOGGER = LogManager.getLogger();
     public static final ChunkSection a = null;
     private final ChunkSection[] sections;
+    public final Object sectionsLock = new Object(); // StarLink
     private BiomeStorage d;
     private final Map<BlockPosition, NBTTagCompound> e;
     public boolean loaded;
@@ -169,8 +172,20 @@ public class Chunk implements IChunkAccess {
 
     @Override
     public ChunkSection[] getSections() {
-        return this.sections;
+	// StarLink start
+	synchronized (this.sections) {
+	    return Arrays.copyOf(this.sections, this.sections.length);
+	}
+        // StarLink end
     }
+    // StarLink start
+    public void setSections(ChunkSection[] sections) {
+	synchronized (this.sections) {
+	    for (int i = 0; i < this.sections.length; i++)
+		this.sections[i] = i < sections.length ? sections[i] : null;
+	}
+    }
+    // StarLink end
 
     @Override
     public IBlockData getType(BlockPosition blockposition) {
@@ -192,13 +207,17 @@ public class Chunk implements IChunkAccess {
             return iblockdata == null ? Blocks.AIR.getBlockData() : iblockdata;
         } else {
             try {
-                if (j >= 0 && j >> 4 < this.sections.length) {
-                    ChunkSection chunksection = this.sections[j >> 4];
+        	// StarLink start
+        	synchronized (this.sections) {
+                    if (j >= 0 && j >> 4 < this.sections.length) {
+                        ChunkSection chunksection = this.sections[j >> 4];
 
-                    if (!ChunkSection.a(chunksection)) {
-                        return chunksection.getType(i & 15, j & 15, k & 15);
+                        if (!ChunkSection.a(chunksection)) {
+                            return chunksection.getType(i & 15, j & 15, k & 15);
+                        }
                     }
-                }
+        	}
+        	// StarLink end
 
                 return Blocks.AIR.getBlockData();
             } catch (Throwable throwable) {
@@ -220,13 +239,17 @@ public class Chunk implements IChunkAccess {
 
     public Fluid a(int i, int j, int k) {
         try {
-            if (j >= 0 && j >> 4 < this.sections.length) {
-                ChunkSection chunksection = this.sections[j >> 4];
+            // StarLink start
+            synchronized (this.sections) {
+                if (j >= 0 && j >> 4 < this.sections.length) {
+                    ChunkSection chunksection = this.sections[j >> 4];
 
-                if (!ChunkSection.a(chunksection)) {
-                    return chunksection.b(i & 15, j & 15, k & 15);
+                    if (!ChunkSection.a(chunksection)) {
+                        return chunksection.b(i & 15, j & 15, k & 15);
+                    }
                 }
             }
+            // StarLink end
 
             return FluidTypes.EMPTY.h();
         } catch (Throwable throwable) {
@@ -253,16 +276,21 @@ public class Chunk implements IChunkAccess {
         int i = blockposition.getX() & 15;
         int j = blockposition.getY();
         int k = blockposition.getZ() & 15;
-        ChunkSection chunksection = this.sections[j >> 4];
+        // StarLink start
+        ChunkSection chunksection;
+        synchronized (iblockdata) {
+            chunksection = this.sections[j >> 4];
 
-        if (chunksection == Chunk.a) {
-            if (iblockdata.isAir()) {
-                return null;
+            if (chunksection == Chunk.a) {
+                if (iblockdata.isAir()) {
+                    return null;
+                }
+
+                chunksection = new ChunkSection(j >> 4 << 4);
+                this.sections[j >> 4] = chunksection;
             }
-
-            chunksection = new ChunkSection(j >> 4 << 4);
-            this.sections[j >> 4] = chunksection;
-        }
+	}
+        // StarLink end
 
         boolean flag1 = chunksection.c();
         IBlockData iblockdata1 = chunksection.setType(i, j & 15, k, iblockdata);
