@@ -1,6 +1,8 @@
 package net.minecraft.server;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,7 +32,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
 
     protected static final Logger LOGGER = LogManager.getLogger();
     private static final EnumDirection[] a = EnumDirection.values();
-    public final List<TileEntity> tileEntityList = Lists.newArrayList();
+    public final Map<BlockPosition, TileEntity> tileEntityList = Maps.newHashMap(); // StarLink - List -> Map
     public final List<TileEntity> tileEntityListTick = Lists.newArrayList();
     protected final List<TileEntity> tileEntityListPending = Lists.newArrayList();
     protected final List<TileEntity> tileEntityListUnload = Lists.newArrayList();
@@ -541,9 +543,9 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
                     }, tileentity::getPosition});
         }
 
-        boolean flag = this.tileEntityList.add(tileentity);
+        this.tileEntityList.put(tileentity.getPosition(), tileentity); // StarLink
 
-        if (flag && tileentity instanceof ITickable) {
+        if (true && tileentity instanceof ITickable) { // StarLink
             this.tileEntityListTick.add(tileentity);
         }
 
@@ -554,7 +556,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
             this.notify(blockposition, iblockdata, iblockdata, 2);
         }
 
-        return flag;
+        return true; // StarLink
     }
 
     public void a(Collection<TileEntity> collection) {
@@ -579,7 +581,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         timings.tileEntityTick.startTiming(); // Spigot
         if (!this.tileEntityListUnload.isEmpty()) {
             this.tileEntityListTick.removeAll(this.tileEntityListUnload);
-            this.tileEntityList.removeAll(this.tileEntityListUnload);
+            this.tileEntityList.values().removeAll(this.tileEntityListUnload); // StarLink
             this.tileEntityListUnload.clear();
         }
 
@@ -637,7 +639,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
                 tilesThisCycle--;
                 this.tileEntityListTick.remove(tileTickPosition--);
                 // Spigot end
-                this.tileEntityList.remove(tileentity);
+                this.tileEntityList.values().remove(tileentity); // StarLink
                 if (this.isLoaded(tileentity.getPosition())) {
                     this.getChunkAtWorldCoords(tileentity.getPosition()).removeTileEntity(tileentity.getPosition());
                 }
@@ -667,7 +669,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
                         this.notify(tileentity1.getPosition(), iblockdata, iblockdata, 3);
                         // CraftBukkit start
                         // From above, don't screw this up - SPIGOT-1746
-                        if (!this.tileEntityList.contains(tileentity1)) {
+                        if (true/* || !this.tileEntityList.contains(tileentity1)*/) { // StarLink
                             this.a(tileentity1);
                         }
                         // CraftBukkit end
@@ -931,7 +933,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         } else {
             if (tileentity != null) {
                 this.tileEntityListPending.remove(tileentity);
-                this.tileEntityList.remove(tileentity);
+                this.tileEntityList.values().remove(tileentity); // StarLink
                 this.tileEntityListTick.remove(tileentity);
             }
 

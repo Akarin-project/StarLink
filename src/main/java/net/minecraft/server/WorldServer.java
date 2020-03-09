@@ -1771,7 +1771,7 @@ public class WorldServer extends World {
 
     private void a(Writer writer) throws IOException {
         CSVWriter csvwriter = CSVWriter.a().a("x").a("y").a("z").a("type").a(writer);
-        Iterator iterator = this.tileEntityList.iterator();
+        Iterator iterator = this.tileEntityList.values().iterator();
 
         while (iterator.hasNext()) {
             TileEntity tileentity = (TileEntity) iterator.next();
