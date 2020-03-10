@@ -703,10 +703,10 @@ public abstract class PlayerList {
         entityplayer1.compassTarget = new Location(worldserver.getWorld(), blockposition1.getX(), blockposition1.getY(), blockposition1.getZ());
         stream
             //.write(new PacketPlayOutSpawnPosition(blockposition1)) // Already did in update world data
-            .write(new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()));
-            //.write(new PacketPlayOutExperience(entityplayer1.exp, entityplayer1.expTotal, entityplayer1.expLevel));
+            .write(new PacketPlayOutServerDifficulty(worlddata.getDifficulty(), worlddata.isDifficultyLocked()))
+            .write(new PacketPlayOutExperience(entityplayer1.exp, entityplayer1.expTotal, entityplayer1.expLevel));
         this.a(entityplayer1, worldserver);
-        // this.d(entityplayer1); // StarLink
+        this.d(entityplayer1);
         // StarLink end
         if (!entityplayer.playerConnection.isDisconnected()) {
             worldserver.addPlayerRespawn(entityplayer1);
@@ -714,19 +714,15 @@ public abstract class PlayerList {
             //this.playersByName.put(entityplayer1.getName().toLowerCase(java.util.Locale.ROOT), entityplayer1); // Spigot // StarLink
             //this.j.put(entityplayer1.getUniqueID(), entityplayer1); // StarLink
         }
-        // entityplayer1.syncInventory(); // StarLink
-        // entityplayer1.setPlayerRealHealth(entityplayer1.getHealth()); // StarLink
+        entityplayer1.syncInventory();
+        entityplayer1.setPlayerRealHealth(entityplayer1.getHealth());
         // Added from changeDimension
-        // this.updateClient(entityplayer); // Update health, etc... // StarLink
-        // entityplayer.updateAbilities(); // StarLink
-        // StarLink start
-        /*
+        this.updateClient(entityplayer); // Update health, etc...
+        entityplayer.updateAbilities();
         for (Object o1 : entityplayer.getEffects()) {
             MobEffect mobEffect = (MobEffect) o1;
-            stream.write(new PacketPlayOutEntityEffect(entityplayer.getId(), mobEffect));
+            stream.write(new PacketPlayOutEntityEffect(entityplayer.getId(), mobEffect)); // StarLink
         }
-        */
-        // StarLink end
 
         // Fire advancement trigger
         entityplayer.triggerDimensionAdvancements(((CraftWorld) fromWorld).getHandle());
