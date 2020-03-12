@@ -18,5 +18,6 @@ public interface Packet<T extends PacketListener> {
     default EnumProtocol protocol() {
 	return EnumProtocol.PLAY; // trick to avoid so much imports
     }
+    default java.util.List<Packet> getExtraPackets() { return null; }
     // StarLink end
 }

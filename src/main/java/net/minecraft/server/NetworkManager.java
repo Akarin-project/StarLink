@@ -205,6 +205,14 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
             });
         }
 
+        // Paper start
+        java.util.List<Packet> extraPackets = packet.getExtraPackets();
+        if (extraPackets != null && !extraPackets.isEmpty()) {
+            for (Packet extraPacket : extraPackets) {
+                this.b(extraPacket, genericfuturelistener);
+            }
+        }
+        // Paper end
     }
     // StarLink start - multiple packets, copied from above
     public void sendPacketAsync(Packet<?> packet) {
