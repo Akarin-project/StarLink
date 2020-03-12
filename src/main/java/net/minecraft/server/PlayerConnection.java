@@ -2396,7 +2396,7 @@ public class PlayerConnection implements PacketListenerPlayIn {
                     }
                 }
                 // Paper end
-                lines[i] = EnumChatFormat.b(new ChatComponentText(EnumChatFormat.b(astring[i])).getString());
+                lines[i] = SharedConstants.a(astring[i]); //Paper - Replaced with anvil color stripping method to stop exploits that allow colored signs to be created.
             }
             SignChangeEvent event = new SignChangeEvent((org.bukkit.craftbukkit.block.CraftBlock) player.getWorld().getBlockAt(x, y, z), this.server.getPlayer(this.player), lines);
             this.server.getPluginManager().callEvent(event);

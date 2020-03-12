@@ -67,6 +67,8 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     public List<EntityItem> captureDrops;
     public long ticksPerAnimalSpawns;
     public long ticksPerMonsterSpawns;
+    public long ticksPerWaterSpawns;
+    public long ticksPerAmbientSpawns;
     public boolean populating;
     public final org.spigotmc.SpigotWorldConfig spigotConfig; // Spigot
     public final cc.bukkit.starlink.StarLinkWorldSettings starLinkSettings = new cc.bukkit.starlink.StarLinkWorldSettings(); // StarLink - add settings
