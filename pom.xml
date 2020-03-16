@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.spigotmc</groupId>
-    <artifactId>StarLink</artifactId>
+    <artifactId>spigot</artifactId>
     <packaging>jar</packaging>
     <version>1.15.2-R0.1-SNAPSHOT</version>
     <name>Spigot</name>
@@ -98,7 +98,6 @@
         <!--
             If you are a plugin developer, please use https://hub.spigotmc.org/nexus/content/repositories/snapshots/
             as your repository URL. This will ensure only Bukkit / Spigot-API are pulled from our Maven repository.
-
             Please see https://www.spigotmc.org/go/maven for more information.
         -->
         <repository>
