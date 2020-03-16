@@ -44,7 +44,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletableFuture; //getServerModName
 import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 import javax.annotation.Nullable;
@@ -1320,7 +1320,7 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
     }
 
     public String getServerModName() {
-        return "Spigot"; // Spigot - Spigot > // CraftBukkit - cb > vanilla!
+        return "StarLink"; // StarLink - StarLink // Spigot - Spigot > // CraftBukkit - cb > vanilla!
     }
 
     public CrashReport b(CrashReport crashreport) {
