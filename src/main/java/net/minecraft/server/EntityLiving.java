@@ -2605,13 +2605,17 @@ public abstract class EntityLiving extends Entity {
     protected void doTick() {}
 
     protected void collideNearby() {
+	// StarLink start
+	int i = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
+	if (i <= 0) return;
+	// StarLink end
         List<Entity> list = this.world.getEntities(this, this.getBoundingBox(), IEntitySelector.a(this));
 
         if (!list.isEmpty()) {
-            int i = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
+            // int i = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING); // StarLink
             int j;
 
-            if (i > 0 && list.size() > i - 1 && this.random.nextInt(4) == 0) {
+            if (/*i > 0 &&*/ list.size() > i - 1 && this.random.nextInt(4) == 0) { // StarLink
                 j = 0;
 
                 for (int k = 0; k < list.size(); ++k) {

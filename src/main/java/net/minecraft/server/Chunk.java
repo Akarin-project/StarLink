@@ -20,6 +20,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -623,8 +625,8 @@ public class Chunk implements IChunkAccess {
 	int i = MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D);
 	int j = MathHelper.floor((axisalignedbb.maxY + 2.0D) / 16.0D);
 
-	i = MathHelper.clamp(i, 0, this.entitySlices.length - 1);
-	j = MathHelper.clamp(j, 0, this.entitySlices.length - 1);
+	i = MathHelper.clamp(i, 0, 15);
+	j = MathHelper.clamp(j, 0, 15);
 
 	for (int k = i; k <= j; ++k) {
 	    if (!this.entitySlices[k].isEmpty()) {
@@ -657,12 +659,12 @@ public class Chunk implements IChunkAccess {
 
     }
 
-    public boolean hasEntities(@Nullable Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate) {
+    public boolean hasEntities(@Nonnull Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate) {
 	int i = MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D);
 	int j = MathHelper.floor((axisalignedbb.maxY + 2.0D) / 16.0D);
 
-	i = MathHelper.clamp(i, 0, this.entitySlices.length - 1);
-	j = MathHelper.clamp(j, 0, this.entitySlices.length - 1);
+	i = MathHelper.clamp(i, 0, 15);
+	j = MathHelper.clamp(j, 0, 15);
 
 	for (int k = i; k <= j; ++k) {
 	    if (!this.entitySlices[k].isEmpty()) {
@@ -674,19 +676,6 @@ public class Chunk implements IChunkAccess {
 		    if (entity1.getBoundingBox().c(axisalignedbb) && entity1 != entity) {
 			if (predicate == null || predicate.test(entity1)) {
 			    return true;
-			}
-
-			if (entity1 instanceof EntityEnderDragon) {
-			    EntityComplexPart[] aentitycomplexpart = ((EntityEnderDragon) entity1).eo();
-			    int l = aentitycomplexpart.length;
-
-			    for (int i1 = 0; i1 < l; ++i1) {
-				EntityComplexPart entitycomplexpart = aentitycomplexpart[i1];
-
-				if (entitycomplexpart != entity && entitycomplexpart.getBoundingBox().c(axisalignedbb) && (predicate == null || predicate.test(entitycomplexpart))) {
-				    return true;
-				}
-			    }
 			}
 		    }
 		}

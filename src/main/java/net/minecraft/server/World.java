@@ -11,6 +11,8 @@ import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1035,7 +1037,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
 	}
     }
 
-    public boolean hasEntities(@Nullable Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate) {
+    public boolean hasEntities(@Nonnull Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate) {
 	this.getMethodProfiler().c("getEntities");
 	int i = MathHelper.floor((axisalignedbb.minX - 2.0D) / 16.0D);
 	int j = MathHelper.floor((axisalignedbb.maxX + 2.0D) / 16.0D);
