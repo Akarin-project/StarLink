@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import net.minecraft.server.AxisAlignedBB;
 import net.minecraft.server.Chunk;
+import net.minecraft.server.ChunkStatus;
 import net.minecraft.server.Entity;
 import net.minecraft.server.EntityAmbient;
 import net.minecraft.server.EntityAnimal;
@@ -28,6 +29,7 @@ import net.minecraft.server.EntityTNTPrimed;
 import net.minecraft.server.EntityThrownTrident;
 import net.minecraft.server.EntityVillager;
 import net.minecraft.server.EntityWither;
+import net.minecraft.server.IChunkAccess;
 import net.minecraft.server.MathHelper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.World;
@@ -141,9 +143,10 @@ public class ActivationRange
             {
                 for ( int j1 = k; j1 <= l; ++j1 )
                 {
-                    if ( world.getWorld().isChunkLoaded( i1, j1 ) )
+                    IChunkAccess chunk = world.getChunkAt( i1, j1, ChunkStatus.FULL, false ); // StarLink
+                    if ( chunk != null ) // StarLink
                     {
-                        activateChunkEntities( world.getChunkAt( i1, j1 ) );
+                        activateChunkEntities( (Chunk) chunk ); // StarLink
                     }
                 }
             }

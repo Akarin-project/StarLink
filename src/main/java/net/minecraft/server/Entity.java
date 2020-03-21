@@ -181,6 +181,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
         return world.isChunkLoaded((int) Math.floor(this.locX) >> 4, (int) Math.floor(this.locZ) >> 4);
     }
     // CraftBukkit end
+    public Chunk chunk; // StarLink
 
     public Entity(EntityTypes<?> entitytypes, World world) {
         this.id = Entity.entityCount.incrementAndGet();
@@ -1294,7 +1295,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
         this.pitch = MathHelper.a(f1, -90.0F, 90.0F) % 360.0F;
         this.lastYaw = this.yaw;
         this.lastPitch = this.pitch;
-        world.getChunkAt((int) Math.floor(this.locX) >> 4, (int) Math.floor(this.locZ) >> 4); // CraftBukkit
+        chunk = world.getChunkAt((int) Math.floor(this.locX) >> 4, (int) Math.floor(this.locZ) >> 4); // CraftBukkit // StarLink
     }
 
     public void setPositionRotation(BlockPosition blockposition, float f, float f1) {
@@ -2648,7 +2649,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
             ChunkCoordIntPair chunkcoordintpair = new ChunkCoordIntPair(new BlockPosition(d0, d1, d2));
 
             ((WorldServer) this.world).getChunkProvider().addTicket(TicketType.POST_TELEPORT, chunkcoordintpair, 0, this.getId());
-            this.world.getChunkAt(chunkcoordintpair.x, chunkcoordintpair.z);
+            chunk = this.world.getChunkAt(chunkcoordintpair.x, chunkcoordintpair.z); // StarLink
             this.enderTeleportTo(d0, d1, d2);
         }
     }

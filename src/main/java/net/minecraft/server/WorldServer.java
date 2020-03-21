@@ -686,14 +686,36 @@ public class WorldServer extends World {
         int k = MathHelper.floor(entity.locZ() / 16.0D);
 
         if (!entity.inChunk || entity.chunkX != i || entity.chunkY != j || entity.chunkZ != k) {
-            if (entity.inChunk && this.isChunkLoaded(entity.chunkX, entity.chunkZ)) {
-                this.getChunkAt(entity.chunkX, entity.chunkZ).a(entity, entity.chunkY);
+            // StarLink start
+            if (entity.inChunk) {
+        	boolean useChunk = entity.chunk != null;
+        	
+        	if (useChunk) {
+            	    boolean sameChunk = entity.chunk.loc.x == entity.chunkX && entity.chunk.loc.z == entity.chunkZ;
+            	    
+            	    if (sameChunk) {
+            		if (entity.chunk.loaded)
+            		    entity.chunk.a(entity, entity.chunkY);
+            	    } else {
+            		// this unlikely to happen
+            		useChunk = false;
+            	    }
+        	}
+        	
+        	IChunkAccess chunk = this.getChunkProvider().getChunkAt(i, j, ChunkStatus.FULL, false);
+        	if (!useChunk && chunk != null) {
+        	    entity.chunk = this.getChunkAt(entity.chunkX, entity.chunkZ);
+        	    entity.chunk.a(entity, entity.chunkY);
+        	}
             }
 
-            if (!entity.cc() && !this.isChunkLoaded(i, k)) {
+            IChunkAccess chunk = this.getChunkAt(i, k, ChunkStatus.FULL, false);
+            if (!entity.cc() && chunk == null) {
+        	// StarLink end
                 entity.inChunk = false;
+                entity.chunk = null; // StarLink
             } else {
-                this.getChunkAt(i, k).a(entity);
+        	entity.chunk = (Chunk) chunk; entity.chunk.a(entity); // StarLink
             }
         }
 
@@ -1176,7 +1198,7 @@ public class WorldServer extends World {
     }
 
     private void removeEntityFromChunk(Entity entity) {
-        IChunkAccess ichunkaccess = this.getChunkAt(entity.chunkX, entity.chunkZ, ChunkStatus.FULL, false);
+        IChunkAccess ichunkaccess = entity.chunk; //this.getChunkAt(entity.chunkX, entity.chunkZ, ChunkStatus.FULL, false); // StarLink
 
         if (ichunkaccess instanceof Chunk) {
             ((Chunk) ichunkaccess).b(entity);

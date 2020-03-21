@@ -51,7 +51,7 @@ public class Chunk implements IChunkAccess {
     private Supplier<PlayerChunk.State> u;
     @Nullable
     private Consumer<Chunk> v;
-    private final ChunkCoordIntPair loc;
+    public final ChunkCoordIntPair loc; // StarLink
     private volatile boolean x;
 
     public Chunk(World world, ChunkCoordIntPair chunkcoordintpair, BiomeStorage biomestorage) {
@@ -381,6 +381,7 @@ public class Chunk implements IChunkAccess {
         entity.chunkY = k;
         entity.chunkZ = this.loc.z;
         this.entitySlices[k].add(entity);
+        entity.chunk = this; // StarLink
     }
 
     @Override

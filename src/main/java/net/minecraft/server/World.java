@@ -459,8 +459,9 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         int k;
 
         if (i >= -30000000 && j >= -30000000 && i < 30000000 && j < 30000000) {
-            if (this.isChunkLoaded(i >> 4, j >> 4)) {
-                k = this.getChunkAt(i >> 4, j >> 4).a(heightmap_type, i & 15, j & 15) + 1;
+            IChunkAccess chunk = this.getChunkAt(i >> 4, j >> 4, ChunkStatus.FULL, false); // StarLink
+            if (chunk != null) { // StarLink
+                k = chunk.a(heightmap_type, i & 15, j & 15) + 1; // StarLink
             } else {
                 k = 0;
             }
