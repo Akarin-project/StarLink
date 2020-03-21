@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +16,10 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
@@ -182,6 +187,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
     }
     // CraftBukkit end
     public Chunk chunk; // StarLink
+    private static final ExecutorService voxelExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("StarLink Voxel Shaper - %d").build()); // StarLink
 
     public Entity(EntityTypes<?> entitytypes, World world) {
         this.id = Entity.entityCount.incrementAndGet();
@@ -823,7 +829,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
 
         return new Vec3D(d0, d1, d2);
     }
-
+    
     public static Vec3D a(Vec3D vec3d, AxisAlignedBB axisalignedbb, IWorldReader iworldreader, VoxelShapeCollision voxelshapecollision, StreamAccumulator<VoxelShape> streamaccumulator) {
         double d0 = vec3d.x;
         double d1 = vec3d.y;

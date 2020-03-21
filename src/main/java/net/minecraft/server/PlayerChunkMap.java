@@ -480,7 +480,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
                         return this.b(playerchunk, chunkstatus);
                     }
                 }
-            }, this.executor);
+            },  executor); // StarLink
         }
     }
 
@@ -515,7 +515,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
             }
 
             return Either.left(new ProtoChunk(chunkcoordintpair, ChunkConverter.a));
-        }, this.executor);
+        }, executor); // StarLink
     }
 
     private CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> b(PlayerChunk playerchunk, ChunkStatus chunkstatus) {

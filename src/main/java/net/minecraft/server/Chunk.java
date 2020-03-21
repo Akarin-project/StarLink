@@ -174,20 +174,8 @@ public class Chunk implements IChunkAccess {
 
     @Override
     public ChunkSection[] getSections() {
-	// StarLink start
-	synchronized (this.sections) {
-	    return Arrays.copyOf(this.sections, this.sections.length);
-	}
-        // StarLink end
+	return Arrays.copyOf(this.sections, this.sections.length);
     }
-    // StarLink start
-    public void setSections(ChunkSection[] sections) {
-	synchronized (this.sections) {
-	    for (int i = 0; i < this.sections.length; i++)
-		this.sections[i] = i < sections.length ? sections[i] : null;
-	}
-    }
-    // StarLink end
 
     @Override
     public IBlockData getType(BlockPosition blockposition) {
@@ -209,17 +197,13 @@ public class Chunk implements IChunkAccess {
             return iblockdata == null ? Blocks.AIR.getBlockData() : iblockdata;
         } else {
             try {
-        	// StarLink start
-        	synchronized (this.sections) {
-                    if (j >= 0 && j >> 4 < this.sections.length) {
-                        ChunkSection chunksection = this.sections[j >> 4];
+        	if (j >= 0 && j >> 4 < this.sections.length) {
+                    ChunkSection chunksection = this.sections[j >> 4];
 
-                        if (!ChunkSection.a(chunksection)) {
-                            return chunksection.getType(i & 15, j & 15, k & 15);
-                        }
+                    if (!ChunkSection.a(chunksection)) {
+                        return chunksection.getType(i & 15, j & 15, k & 15);
                     }
-        	}
-        	// StarLink end
+                }
 
                 return Blocks.AIR.getBlockData();
             } catch (Throwable throwable) {
@@ -241,17 +225,13 @@ public class Chunk implements IChunkAccess {
 
     public Fluid a(int i, int j, int k) {
         try {
-            // StarLink start
-            synchronized (this.sections) {
-                if (j >= 0 && j >> 4 < this.sections.length) {
-                    ChunkSection chunksection = this.sections[j >> 4];
+            if (j >= 0 && j >> 4 < this.sections.length) {
+                ChunkSection chunksection = this.sections[j >> 4];
 
-                    if (!ChunkSection.a(chunksection)) {
-                        return chunksection.b(i & 15, j & 15, k & 15);
-                    }
+                if (!ChunkSection.a(chunksection)) {
+                    return chunksection.b(i & 15, j & 15, k & 15);
                 }
             }
-            // StarLink end
 
             return FluidTypes.EMPTY.h();
         } catch (Throwable throwable) {
@@ -278,21 +258,15 @@ public class Chunk implements IChunkAccess {
         int i = blockposition.getX() & 15;
         int j = blockposition.getY();
         int k = blockposition.getZ() & 15;
-        // StarLink start
-        ChunkSection chunksection;
-        synchronized (iblockdata) {
-            chunksection = this.sections[j >> 4];
-
-            if (chunksection == Chunk.a) {
-                if (iblockdata.isAir()) {
-                    return null;
-                }
-
-                chunksection = new ChunkSection(j >> 4 << 4);
-                this.sections[j >> 4] = chunksection;
+        ChunkSection chunksection = this.sections[j >> 4];
+        if (chunksection == Chunk.a) {
+            if (iblockdata.isAir()) {
+                return null;
             }
-	}
-        // StarLink end
+
+            chunksection = new ChunkSection(j >> 4 << 4);
+            this.sections[j >> 4] = chunksection;
+        }
 
         boolean flag1 = chunksection.c();
         IBlockData iblockdata1 = chunksection.setType(i, j & 15, k, iblockdata);

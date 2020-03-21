@@ -1814,7 +1814,7 @@ public abstract class EntityLiving extends Entity {
         return this.getAttributeMap().a(iattribute);
     }
 
-    public synchronized AttributeMapBase getAttributeMap() { // StarLink
+    public AttributeMapBase getAttributeMap() {
         if (this.attributeMap == null) {
             this.attributeMap = new AttributeMapServer();
             this.craftAttributes = new CraftAttributeMap(attributeMap); // CraftBukkit

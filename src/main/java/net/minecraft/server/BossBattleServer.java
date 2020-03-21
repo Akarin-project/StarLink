@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class BossBattleServer extends BossBattle {
 
-    private final Set<EntityPlayer> h = Collections.synchronizedSet(Sets.newHashSet()); // StarLink - synchronized
+    private final Set<EntityPlayer> h = Sets.newHashSet();
     private final Set<EntityPlayer> i;
     public boolean visible;
 

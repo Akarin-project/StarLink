@@ -34,6 +34,24 @@ public class ChunkProviderServer extends IChunkProvider {
     private final long[] cachePos = new long[4];
     private final ChunkStatus[] cacheStatus = new ChunkStatus[4];
     private final IChunkAccess[] cacheChunk = new IChunkAccess[4];
+    // StarLink start
+    private QueryCache cache$0;
+    private QueryCache cache$1;
+    private QueryCache cache$2;
+    private QueryCache cache$3;
+    
+    private final static class QueryCache {
+	private final long pos;
+	private final ChunkStatus status;
+	private final IChunkAccess chunk;
+	
+	private QueryCache(Long chunkPos, ChunkStatus chunkStatus, IChunkAccess chunkAccess) {
+	    pos = chunkPos;
+	    status = chunkStatus;
+	    chunk = chunkAccess;
+	}
+    }
+    // StarLink end
 
     public ChunkProviderServer(WorldServer worldserver, File file, DataFixer datafixer, DefinedStructureManager definedstructuremanager, Executor executor, ChunkGenerator<?> chunkgenerator, int i, WorldLoadListener worldloadlistener, Supplier<WorldPersistentData> supplier) {
         this.world = worldserver;
@@ -80,18 +98,47 @@ public class ChunkProviderServer extends IChunkProvider {
     @Nullable
     @Override
     public IChunkAccess getChunkAt(int i, int j, ChunkStatus chunkstatus, boolean flag) {
-        if (Thread.currentThread() != this.serverThread) {
+        if (Thread.currentThread() != this.serverThread) { // StarLink
             return (IChunkAccess) CompletableFuture.supplyAsync(() -> {
                 return this.getChunkAt(i, j, chunkstatus, flag);
             }, this.serverThreadQueue).join();
         } else {
-            GameProfilerFiller gameprofilerfiller = this.world.getMethodProfiler();
+            // GameProfilerFiller gameprofilerfiller = this.world.getMethodProfiler(); // StarLink
 
-            gameprofilerfiller.c("getChunk");
+            // gameprofilerfiller.c("getChunk"); // StarLink
             long k = ChunkCoordIntPair.pair(i, j);
 
             IChunkAccess ichunkaccess;
 
+            // StarLink start - hardcore for performance
+            QueryCache cache = cache$0;
+            if (cache != null && cache.pos == k && cache.status == chunkstatus)
+                return cache.chunk;
+            
+            cache = cache$1;
+            if (cache != null && cache.pos == k && cache.status == chunkstatus) {
+                cache$1 = cache$0;
+                cache$0 = cache;
+                return cache.chunk;
+            }
+            
+            cache = cache$2;
+            if (cache != null && cache.pos == k && cache.status == chunkstatus) {
+                cache$2 = cache$1;
+                cache$1 = cache$0;
+                cache$0 = cache;
+        	    return cache.chunk;
+            }
+            
+            cache = cache$3;
+            if (cache != null && cache.pos == k && cache.status == chunkstatus) {
+                cache$3 = cache$2;
+                cache$2 = cache$1;
+                cache$1 = cache$0;
+                cache$0 = cache;
+                return cache.chunk;
+            }
+            /*
             for (int l = 0; l < 4; ++l) {
                 if (k == this.cachePos[l] && chunkstatus == this.cacheStatus[l]) {
                     ichunkaccess = this.cacheChunk[l];
@@ -100,13 +147,15 @@ public class ChunkProviderServer extends IChunkProvider {
                     }
                 }
             }
+            */
+            // StarLink end
 
-            gameprofilerfiller.c("getChunkCacheMiss");
-            world.timings.syncChunkLoadTimer.startTiming(); // Spigot
+            // gameprofilerfiller.c("getChunkCacheMiss"); // StarLink
+            // world.timings.syncChunkLoadTimer.startTiming(); // Spigot // StarLink
             CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> completablefuture = this.getChunkFutureMainThread(i, j, chunkstatus, flag);
 
             this.serverThreadQueue.awaitTasks(completablefuture::isDone);
-            world.timings.syncChunkLoadTimer.stopTiming(); // Spigot
+            // world.timings.syncChunkLoadTimer.stopTiming(); // Spigot // StarLink
             ichunkaccess = (IChunkAccess) ((Either) completablefuture.join()).map((ichunkaccess1) -> {
                 return ichunkaccess1;
             }, (playerchunk_failure) -> {
@@ -116,7 +165,15 @@ public class ChunkProviderServer extends IChunkProvider {
                     return null;
                 }
             });
-            this.a(k, ichunkaccess, chunkstatus);
+            // StarLink start - hardcore for performance and synch
+            // this.a(k, ichunkaccess, chunkstatus);
+            if (ichunkaccess != null) {
+        	cache$3 = cache$2;
+        	cache$2 = cache$1;
+        	cache$1 = cache$0;
+        	cache$0 = new QueryCache(k, chunkstatus, ichunkaccess);
+            }
+            // StarLink end
             return ichunkaccess;
         }
     }
@@ -186,12 +243,12 @@ public class ChunkProviderServer extends IChunkProvider {
             // CraftBukkit end
             this.chunkMapDistance.a(TicketType.UNKNOWN, chunkcoordintpair, l, chunkcoordintpair);
             if (this.a(playerchunk, l)) {
-                GameProfilerFiller gameprofilerfiller = this.world.getMethodProfiler();
+                //GameProfilerFiller gameprofilerfiller = this.world.getMethodProfiler(); // StarLink
 
-                gameprofilerfiller.enter("chunkLoad");
+                //gameprofilerfiller.enter("chunkLoad"); // StarLink
                 this.tickDistanceManager();
                 playerchunk = this.getChunk(k);
-                gameprofilerfiller.exit();
+                //gameprofilerfiller.exit(); // StarLink
                 if (this.a(playerchunk, l)) {
                     throw (IllegalStateException) SystemUtils.c(new IllegalStateException("No chunk holder after ticket has been added"));
                 }
@@ -255,7 +312,7 @@ public class ChunkProviderServer extends IChunkProvider {
         if (!flag && !flag1) {
             return false;
         } else {
-            this.clearCache();
+            //this.clearCache(); // StarLink
             return true;
         }
     }
