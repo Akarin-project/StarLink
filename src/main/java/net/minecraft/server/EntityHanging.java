@@ -145,7 +145,7 @@ public abstract class EntityHanging extends Entity {
                 }
             }
 
-            return this.world.hasEntities(this, this.getBoundingBox(), EntityHanging.b); // StarLink - use optimized method
+            return !this.world.hasEntities(this, this.getBoundingBox(), EntityHanging.b); // StarLink - use optimized method
         }
     }
 
