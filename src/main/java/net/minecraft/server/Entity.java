@@ -1349,8 +1349,8 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
     public void pickup(EntityHuman entityhuman) {}
 
     public void collide(Entity entity) {
-        if (!this.isSameVehicle(entity)) {
-            if (!entity.noclip && !this.noclip) {
+        if (!entity.noclip && !this.noclip) { // StarLink - swap order
+            if (!this.isSameVehicle(entity)) { // StarLink - swap order
                 double d0 = entity.locX() - this.locX();
                 double d1 = entity.locZ() - this.locZ();
                 double d2 = MathHelper.a(d0, d1);
