@@ -4,12 +4,13 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 
+@javax.annotation.concurrent.ThreadSafe // StarLink
 public class EntitySenses {
 
     private final EntityInsentient a;
     //private final List<Entity> b = Lists.newArrayList(); // StarLink
     //private final List<Entity> c = Lists.newArrayList(); // StarLink
-    private final java.util.Map<Entity, Boolean> senses = com.google.common.collect.Maps.newConcurrentMap(); // StarLink
+    private final java.util.Map<Entity, Boolean> senses = com.google.common.collect.Maps.newHashMap(); // StarLink
 
     public EntitySenses(EntityInsentient entityinsentient) {
         this.a = entityinsentient;

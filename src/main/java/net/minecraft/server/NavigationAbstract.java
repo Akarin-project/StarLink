@@ -39,7 +39,6 @@ public abstract class NavigationAbstract {
     private float s;
     private final Pathfinder t;
     private long lastPathfindAsync; // StarLink
-    private static final ExecutorService pathfindExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("StarLink Pathfinder - %d").build()); // StarLink
 
     public NavigationAbstract(EntityInsentient entityinsentient, World world) {
         this.g = Vec3D.a;
@@ -91,34 +90,32 @@ public abstract class NavigationAbstract {
 
     }
     // StarLink start
-    public void doPathfindAsync() {
-        if (this.b.getTime() - this.lastPathfindAsync > 20L) {
+    public void doPathfind(ChunkCache cache) {
+        PathEntity result = findPath(cache, Collections.singleton(this.q), this.r);
+        NavigationAbstract.this.b.getMinecraftServer().processQueue.add(() -> {
+            if (result != null && result.k() != null)
+                this.q = result.k();
+            
+            NavigationAbstract.this.c = result;
+    	    lastPathfindAsync = this.b.getTime();
+        });
+    }
+    
+    public ChunkCache cacheChunk() {
+        float f = (float) this.p.getValue();
+        BlockPosition blockposition = new BlockPosition(this.a);
+        int k = (int) (f + (float) 8);
+        return new ChunkCache(this.b, blockposition.b(-k, -k, -k), blockposition.b(k, k, k));
+    }
+    
+    public boolean needPathfind() {
+	++this.e;
+	if (this.b.getTime() - this.lastPathfindAsync > 20L) {
             if (this.q != null) {
-        	this.lastPathfindAsync = this.b.getTime();
-        	
-                float f = (float) this.p.getValue();
-                BlockPosition blockposition = new BlockPosition(this.a);
-                int k = (int) (f + (float) 8);
-                ChunkCache cache = new ChunkCache(this.b, blockposition.b(-k, -k, -k), blockposition.b(k, k, k));
-                
-                if (this.c != null && !this.c.b()) {
-                    doTickAsync(this.c);
-                    return;
-                }
-                
-                pathfindExecutor.execute(() -> {
-                    PathEntity result = findPathAsync(cache, Collections.singleton(this.q), this.r);
-                    NavigationAbstract.this.b.getMinecraftServer().processQueue.add(() -> {
-                        if (result != null && result.k() != null)
-                            this.q = result.k();
-                        
-                        NavigationAbstract.this.c = result;
-                    });
-                });
+                return this.c == null || this.c.b();
             }
-        } else {
-            doTickAsync(this.c);
         }
+	return false;
     }
     // StarLink end
 
@@ -171,7 +168,7 @@ public abstract class NavigationAbstract {
         }
     }
     // StarLink start
-    protected PathEntity findPathAsync(ChunkCache cache, Set<BlockPosition> set, int j) {
+    protected PathEntity findPath(ChunkCache cache, Set<BlockPosition> set, int j) {
         if (this.a.locY() < 0.0D) {
             return null;
         } else if (!this.a()) {
@@ -255,18 +252,13 @@ public abstract class NavigationAbstract {
         }
     }
     // StarLink start
-    public void tickAsync() {
-	++this.e;
-	this.doPathfindAsync();
-    }
-    
-    public void doTickAsync(PathEntity pathEntity) {
+    public void doTick(PathEntity pathEntity) {
 	if (shouldContinuePathfind(pathEntity)) return;
 	
 	Vec3D vec3d;
 
         if (this.a()) {
-            applyUnitAsync(pathEntity);
+            applyUnit(pathEntity);
         } else if (pathEntity.f() < pathEntity.e()) {
             vec3d = this.b();
             Vec3D vec3d1 = pathEntity.a(this.a, pathEntity.f());
@@ -276,7 +268,6 @@ public abstract class NavigationAbstract {
             }
         }
 
-        // PacketDebug.a(this.b, this.a, pathEntity, this.l);
         if (shouldContinuePathfind(pathEntity)) return;
         
         vec3d = pathEntity.a((Entity) this.a);
@@ -285,7 +276,7 @@ public abstract class NavigationAbstract {
         this.a.getControllerMove().a(vec3d.x, this.b.getType(blockposition.down()).isAir() ? vec3d.y : PathfinderNormal.a((IBlockAccess) this.b, blockposition), vec3d.z, this.d);
     }
     
-    protected void applyUnitAsync(PathEntity pathEntity) {
+    protected void applyUnit(PathEntity pathEntity) {
         Vec3D vec3d = this.b();
 
         this.l = this.a.getWidth() > 0.75F ? this.a.getWidth() / 2.0F : 0.75F - this.a.getWidth() / 2.0F;
@@ -295,10 +286,10 @@ public abstract class NavigationAbstract {
             pathEntity.c(pathEntity.f() + 1);
         }
 
-        this.setUnitAsync(pathEntity, vec3d);
+        this.setUnit(pathEntity, vec3d);
     }
 
-    protected void setUnitAsync(PathEntity pathEntity, Vec3D vec3d) {
+    protected void setUnit(PathEntity pathEntity, Vec3D vec3d) {
         if (this.e - this.f > 100) {
             if (vec3d.distanceSquared(this.g) < 2.25D) {
                 this.o();
