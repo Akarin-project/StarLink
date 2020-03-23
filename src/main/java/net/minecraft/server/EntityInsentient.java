@@ -58,7 +58,6 @@ public abstract class EntityInsentient extends EntityLiving {
     private float bI;
 
     public boolean aware = true; // CraftBukkit
-    public static final ExecutorService entityTicker = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("StarLink Entity Ticker - %d").build()); // StarLink
 
     protected EntityInsentient(EntityTypes<? extends EntityInsentient> entitytypes, World world) {
         super(entitytypes, world);
@@ -667,12 +666,10 @@ public abstract class EntityInsentient extends EntityLiving {
         // StarLink start
 	boolean pathfind = this.navigation.needPathfind();
 	ChunkCache chunkCache = pathfind ? this.navigation.cacheChunk() : null;
-	entityTicker.execute(() -> {
-	    if (pathfind)
-		this.navigation.doPathfind(chunkCache);
-	    else
-		this.navigation.doTick(this.navigation.c);
-	});
+	if (pathfind)
+	    entityTicker.execute(() -> this.navigation.doPathfind(chunkCache));
+	else
+	    this.navigation.doTick(this.navigation.c);
 	// StarLink end
         this.world.getMethodProfiler().exit();
         this.world.getMethodProfiler().enter("mob tick");

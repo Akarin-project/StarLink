@@ -187,7 +187,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
     }
     // CraftBukkit end
     public Chunk chunk; // StarLink
-    private static final ExecutorService voxelExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("StarLink Voxel Shaper - %d").build()); // StarLink
+    public static final ExecutorService entityTicker = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("StarLink Entity Ticker - %d").build()); // StarLink
 
     public Entity(EntityTypes<?> entitytypes, World world) {
         this.id = Entity.entityCount.incrementAndGet();
@@ -1379,11 +1379,11 @@ public abstract class Entity implements INamableTileEntity, ICommandListener {
                     d0 *= (double) (1.0F - this.J);
                     d1 *= (double) (1.0F - this.J);
                     if (!this.isVehicle()) {
-                        this.h(-d0, 0.0D, -d1);
+                	this.h(-d0, 0.0D, -d1);
                     }
 
                     if (!entity.isVehicle()) {
-                        entity.h(d0, 0.0D, d1);
+                	entity.h(d0, 0.0D, d1);
                     }
                 }
 
