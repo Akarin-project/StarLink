@@ -666,25 +666,36 @@ public abstract class EntityInsentient extends EntityLiving {
         // StarLink start
 	boolean pathfind = this.navigation.needPathfind();
 	ChunkCache chunkCache = pathfind ? this.navigation.cacheChunk() : null;
-	if (pathfind)
-	    entityTicker.execute(() -> this.navigation.doPathfind(chunkCache));
-	else
+	if (pathfind) {
+	    entityTicker.execute(() -> {
+		this.navigation.doPathfind(chunkCache);
+		this.moveController.doTick(chunkCache);
+		this.lookController.a();
+		this.bq.b();
+	    });
+	} else {
 	    this.navigation.doTick(this.navigation.c);
+		this.moveController.a();
+		this.lookController.a();
+		this.bq.b();
+	}
 	// StarLink end
         this.world.getMethodProfiler().exit();
         this.world.getMethodProfiler().enter("mob tick");
         this.mobTick();
         this.world.getMethodProfiler().exit();
-        this.world.getMethodProfiler().enter("controls");
-        this.world.getMethodProfiler().enter("move");
-        this.moveController.a();
-        this.world.getMethodProfiler().exitEnter("look");
-        this.lookController.a();
-        this.world.getMethodProfiler().exitEnter("jump");
-        this.bq.b();
-        this.world.getMethodProfiler().exit();
-        this.world.getMethodProfiler().exit();
-        this.K();
+        // StarLink start
+        //this.world.getMethodProfiler().enter("controls");
+        //this.world.getMethodProfiler().enter("move");
+        //this.moveController.a();
+        //this.world.getMethodProfiler().exitEnter("look");
+        //this.lookController.a();
+        //this.world.getMethodProfiler().exitEnter("jump");
+        //this.bq.b();
+        //this.world.getMethodProfiler().exit();
+        //this.world.getMethodProfiler().exit();
+        //this.K();
+        // StarLink end
     }
 
     protected void K() {
