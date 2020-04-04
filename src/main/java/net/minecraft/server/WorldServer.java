@@ -1065,6 +1065,7 @@ public class WorldServer extends World {
 
         for (int j = 0; j < i; ++j) {
             List<Entity> entityslice = aentityslice[j]; // Spigot
+            synchronized (entityslice) { // StarLink
             Iterator iterator = entityslice.iterator();
 
             while (iterator.hasNext()) {
@@ -1091,6 +1092,7 @@ public class WorldServer extends World {
                     this.unregisterEntity(entity);
                 }
             }
+            } // StarLink
         }
 
     }

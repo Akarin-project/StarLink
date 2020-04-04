@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Map.Entry;
@@ -305,7 +306,9 @@ public class ChunkRegionLoader {
             chunk.d(false);
 
             for (int j = 0; j < chunk.getEntitySlices().length; ++j) {
-                Iterator iterator1 = chunk.getEntitySlices()[j].iterator();
+        	List<Entity> slice = chunk.getEntitySlices()[j]; // StarLink
+        	synchronized (slice) { // StarLink
+                Iterator iterator1 = slice.iterator(); // StarLink
 
                 while (iterator1.hasNext()) {
                     Entity entity = (Entity) iterator1.next();
@@ -316,6 +319,7 @@ public class ChunkRegionLoader {
                         nbttaglist2.add(nbttagcompound4);
                     }
                 }
+        	} // StarLink
             }
         } else {
             ProtoChunk protochunk = (ProtoChunk) ichunkaccess;

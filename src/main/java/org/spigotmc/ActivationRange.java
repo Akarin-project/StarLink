@@ -163,6 +163,7 @@ public class ActivationRange
     {
         for ( List<Entity> slice : chunk.entitySlices )
         {
+            synchronized (slice) { // StarLink
             for ( Entity entity : (Collection<Entity>) slice )
             {
                 if ( MinecraftServer.currentTick > entity.activatedTick )
@@ -178,6 +179,7 @@ public class ActivationRange
                     }
                 }
             }
+            } // StarLink
         }
     }
 

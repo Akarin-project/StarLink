@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+
 import net.minecraft.server.BiomeBase;
 import net.minecraft.server.BiomeStorage;
 import net.minecraft.server.BlockPosition;
@@ -106,7 +108,12 @@ public class CraftChunk implements Chunk {
         net.minecraft.server.Chunk chunk = getHandle();
 
         for (int i = 0; i < 16; i++) {
-            count += chunk.entitySlices[i].size();
+            // StarLink start
+            List<net.minecraft.server.Entity> slice = chunk.entitySlices[i];
+            synchronized (slice) {
+                count += slice.size();
+	    }
+            // StarLink end
         }
 
         Entity[] entities = new Entity[count];

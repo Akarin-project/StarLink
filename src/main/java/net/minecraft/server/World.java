@@ -1001,6 +1001,12 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         int j = MathHelper.floor((axisalignedbb.maxX + 2.0D) / 16.0D);
         int k = MathHelper.floor((axisalignedbb.minZ - 2.0D) / 16.0D);
         int l = MathHelper.floor((axisalignedbb.maxZ + 2.0D) / 16.0D);
+        // StarLink start - faster on same chunk
+        if (i == j && k == l) {
+            entity.chunk.getEntities(entity, axisalignedbb, list, predicate);
+            return list;
+        }
+        // StarLink end
 
         for (int i1 = i; i1 <= j; ++i1) {
             for (int j1 = k; j1 <= l; ++j1) {
@@ -1025,6 +1031,11 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
 	int j = MathHelper.floor((axisalignedbb.maxX + 2.0D) / 16.0D);
 	int k = MathHelper.floor((axisalignedbb.minZ - 2.0D) / 16.0D);
 	int l = MathHelper.floor((axisalignedbb.maxZ + 2.0D) / 16.0D);
+	
+        if (i == j && k == l) {
+            entity.chunk.getEntitiesWith(entity, axisalignedbb, predicate, consumer);
+            return;
+        }
 
 	for (int i1 = i; i1 <= j; ++i1) {
 	    for (int j1 = k; j1 <= l; ++j1) {
@@ -1043,6 +1054,9 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
 	int j = MathHelper.floor((axisalignedbb.maxX + 2.0D) / 16.0D);
 	int k = MathHelper.floor((axisalignedbb.minZ - 2.0D) / 16.0D);
 	int l = MathHelper.floor((axisalignedbb.maxZ + 2.0D) / 16.0D);
+	
+        if (i == j && k == l)
+            return entity.chunk.hasEntities(entity, axisalignedbb, predicate);
 
 	for (int i1 = i; i1 <= j; ++i1) {
 	    for (int j1 = k; j1 <= l; ++j1) {

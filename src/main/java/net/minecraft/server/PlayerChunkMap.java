@@ -604,6 +604,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
 
                     for (int j = 0; j < i; ++j) {
                         List<Entity> entityslice = aentityslice[j]; // Spigot
+                        synchronized (entityslice) { // StarLink
                         Iterator iterator = entityslice.iterator();
 
                         while (iterator.hasNext()) {
@@ -624,6 +625,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
                                 }
                             }
                         }
+                        } // StarLink
                     }
 
                     if (list != null) {
@@ -818,7 +820,16 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
 
             // CraftBukkit - decompile error
             csvwriter.a(chunkcoordintpair.x, chunkcoordintpair.z, playerchunk.getTicketLevel(), optional.isPresent(), optional.map(IChunkAccess::getChunkStatus).orElse(null), optional1.map(Chunk::getState).orElse(null), a(playerchunk.c()), a(playerchunk.a()), a(playerchunk.b()), this.chunkDistanceManager.c(entry.getLongKey()), !this.isOutsideOfRange(chunkcoordintpair), optional1.map((chunk) -> {
-                return Stream.of(chunk.getEntitySlices()).mapToInt(List::size).sum(); // Spigot
+        	// StarLink start
+        	// return Stream.of(chunk.getEntitySlices()).mapToInt(List::size).sum(); // Spigot
+        	int sum = 0;
+        	for (List<Entity> slice : chunk.getEntitySlices()) {
+        	    synchronized (slice) {
+        		sum += slice.size();
+		    }
+        	}
+        	return sum;
+        	// StarLink end
             }).orElse(0), optional1.map((chunk) -> {
                 return chunk.getTileEntities().size();
             }).orElse(0));

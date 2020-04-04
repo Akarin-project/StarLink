@@ -356,7 +356,8 @@ public class Chunk implements IChunkAccess {
         entity.chunkX = this.loc.x;
         entity.chunkY = k;
         entity.chunkZ = this.loc.z;
-        this.entitySlices[k].add(entity);
+        List<Entity> slice = this.entitySlices[k]; // StarLink
+        synchronized (slice) { slice.add(entity); } // StarLink
         entity.chunk = this; // StarLink
     }
 
@@ -378,7 +379,8 @@ public class Chunk implements IChunkAccess {
             i = this.entitySlices.length - 1;
         }
 
-        this.entitySlices[i].remove(entity);
+        List<Entity> slice = this.entitySlices[i]; // StarLink
+        synchronized (slice) { slice.remove(entity); } // StarLink
     }
 
     @Override
@@ -565,8 +567,12 @@ public class Chunk implements IChunkAccess {
         j = MathHelper.clamp(j, 0, this.entitySlices.length - 1);
 
         for (int k = i; k <= j; ++k) {
-            if (!this.entitySlices[k].isEmpty()) {
-                Iterator iterator = this.entitySlices[k].iterator();
+            // StarLink start
+            List<Entity> slice = this.entitySlices[k];
+            synchronized (slice) {
+            if (!slice.isEmpty()) {
+                Iterator<Entity> iterator = slice.iterator();
+                // StarLink end
 
                 while (iterator.hasNext()) {
                     Entity entity1 = (Entity) iterator.next();
@@ -591,31 +597,52 @@ public class Chunk implements IChunkAccess {
                     }
                 }
             }
+            } // StarLink
         }
 
     }
     // StarLink start - with consumer, copied from above
-    public void getEntitiesWith(@Nullable Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate, Consumer<Entity> consumer) {
-	int i = MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D);
-	int j = MathHelper.floor((axisalignedbb.maxY + 2.0D) / 16.0D);
+    public void getEntities(@Nullable Entity entity, AxisAlignedBB axisalignedbb, List<Entity> list, @Nullable Predicate<? super Entity> predicate) {
+	int sliceMinY = MathHelper.clamp(MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D), 0, 15);
+	int sliceMaxY = MathHelper.clamp(MathHelper.floor((axisalignedbb.maxY + 2.0D) / 16.0D), 0, 15);
 
-	i = MathHelper.clamp(i, 0, 15);
-	j = MathHelper.clamp(j, 0, 15);
-
-	for (int k = i; k <= j; ++k) {
-	    if (!this.entitySlices[k].isEmpty()) {
-		Iterator<Entity> iterator = this.entitySlices[k].iterator();
-
-		while (iterator.hasNext()) {
-		    Entity entity1 = (Entity) iterator.next();
-
-		    if (entity1.getBoundingBox().c(axisalignedbb) && entity1 != entity) {
-			if (predicate == null || predicate.test(entity1)) {
-			    consumer.accept(entity1);
+	for (int i = sliceMinY; i <= sliceMaxY; ++i) {
+	    List<Entity> slice = this.entitySlices[i];
+	    synchronized (slice) {
+		for (Entity each : slice) {
+		    if (each != entity && each.getBoundingBox().c(axisalignedbb)) {
+			if (predicate == null || predicate.test(each)) {
+			    list.add(each);
 			}
 
-			if (entity1 instanceof EntityEnderDragon) {
-			    EntityComplexPart[] aentitycomplexpart = ((EntityEnderDragon) entity1).eo();
+			if (each instanceof EntityEnderDragon) {
+			    for (EntityComplexPart entitycomplexpart : ((EntityEnderDragon) each).eo()) {
+				if (entitycomplexpart != entity && entitycomplexpart.getBoundingBox().c(axisalignedbb) && (predicate == null || predicate.test(entitycomplexpart))) {
+				    list.add(entitycomplexpart);
+				}
+			    }
+			}
+		    }
+		}
+	    }
+        }
+    }
+    
+    public void getEntitiesWith(@Nullable Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate, Consumer<Entity> consumer) {
+	int sliceMinY = MathHelper.clamp(MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D), 0, 15);
+	int sliceMaxY = MathHelper.clamp(MathHelper.floor((axisalignedbb.maxY + 2.0D) / 16.0D), 0, 15);
+
+	for (int i = sliceMinY; i <= sliceMaxY; ++i) {
+	    List<Entity> slice = this.entitySlices[i];
+	    synchronized (slice) {
+		for (Entity each : slice) {
+		    if (each != entity && each.getBoundingBox().c(axisalignedbb)) {
+			if (predicate == null || predicate.test(each)) {
+			    consumer.accept(each);
+			}
+
+			if (each instanceof EntityEnderDragon) {
+			    EntityComplexPart[] aentitycomplexpart = ((EntityEnderDragon) each).eo();
 			    int l = aentitycomplexpart.length;
 
 			    for (int i1 = 0; i1 < l; ++i1) {
@@ -634,22 +661,24 @@ public class Chunk implements IChunkAccess {
     }
 
     public boolean hasEntities(@Nonnull Entity entity, AxisAlignedBB axisalignedbb, @Nullable Predicate<? super Entity> predicate) {
-	int i = MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D);
-	int j = MathHelper.floor((axisalignedbb.maxY + 2.0D) / 16.0D);
+	int sliceMinY = MathHelper.clamp(MathHelper.floor((axisalignedbb.minY - 2.0D) / 16.0D), 0, 15);
+	int sliceMaxY = MathHelper.clamp(MathHelper.floor((axisalignedbb.maxY + 2.0D) / 16.0D), 0, 15);
 
-	i = MathHelper.clamp(i, 0, 15);
-	j = MathHelper.clamp(j, 0, 15);
-
-	for (int k = i; k <= j; ++k) {
-	    if (!this.entitySlices[k].isEmpty()) {
-		Iterator<Entity> iterator = this.entitySlices[k].iterator();
-
-		while (iterator.hasNext()) {
-		    Entity entity1 = (Entity) iterator.next();
-
-		    if (entity1.getBoundingBox().c(axisalignedbb) && entity1 != entity) {
-			if (predicate == null || predicate.test(entity1)) {
+	for (int i = sliceMinY; i <= sliceMaxY; ++i) {
+	    List<Entity> slice = this.entitySlices[i];
+	    synchronized (slice) {
+		for (Entity each : slice) {
+		    if (each != entity && each.getBoundingBox().c(axisalignedbb)) {
+			if (predicate == null || predicate.test(each)) {
 			    return true;
+			}
+
+			if (each instanceof EntityEnderDragon) {
+			    for (EntityComplexPart entitycomplexpart : ((EntityEnderDragon) each).eo()) {
+				if (entitycomplexpart != entity && entitycomplexpart.getBoundingBox().c(axisalignedbb) && (predicate == null || predicate.test(entitycomplexpart))) {
+				    return true;
+				}
+			    }
 			}
 		    }
 		}
@@ -667,7 +696,9 @@ public class Chunk implements IChunkAccess {
         j = MathHelper.clamp(j, 0, this.entitySlices.length - 1);
 
         for (int k = i; k <= j; ++k) {
-            Iterator iterator = this.entitySlices[k].iterator(); // Spigot
+            List<Entity> slice = this.entitySlices[k]; // StarLink
+            synchronized (slice) { // StarLink
+            Iterator iterator = slice.iterator(); // Spigot // StarLink
 
             while (iterator.hasNext()) {
                 T entity = (T) iterator.next(); // CraftBukkit - decompile error
@@ -676,6 +707,7 @@ public class Chunk implements IChunkAccess {
                     list.add(entity);
                 }
             }
+            } // StarLink
         }
 
     }
@@ -688,7 +720,9 @@ public class Chunk implements IChunkAccess {
         j = MathHelper.clamp(j, 0, this.entitySlices.length - 1);
 
         for (int k = i; k <= j; ++k) {
-            Iterator iterator = this.entitySlices[k].iterator(); // Spigot
+            List<Entity> slice = this.entitySlices[k]; // StarLink
+            synchronized (slice) { // StarLink
+            Iterator iterator = slice.iterator(); // Spigot // StarLink
 
             while (iterator.hasNext()) {
                 T t0 = (T) iterator.next(); // CraftBukkit - decompile error
@@ -697,6 +731,7 @@ public class Chunk implements IChunkAccess {
                     list.add(t0);
                 }
             }
+            } // StarLink
         }
 
     }
